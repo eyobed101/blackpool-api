@@ -15,12 +15,19 @@ return new class extends Migration
     {
         Schema::create('bets', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
-            $table->integer('event_id');
-            $table->integer('odd');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('event_id');
+            $table->unsignedBigInteger('bet_combination_id')->nullable();
+            $table->string('outcome');
             $table->integer('bet_amount');
+            $table->decimal('potential_payout', 8, 2);
             $table->enum('status', ['PROCESSING', 'COMPLETED', 'FAILED']);
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users');
+            
+            $table->foreign('event_id')->references('id')->on('events');
+            $table->foreign('bet_combination_id')->references('id')->on('bet_combinations');
         });
     }
 
