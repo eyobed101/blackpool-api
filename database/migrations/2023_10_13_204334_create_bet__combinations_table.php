@@ -13,21 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('verifications', function (Blueprint $table) {
+        Schema::create('bet__combinations', function (Blueprint $table) {
             $table->id();
-            $table->BigInteger('user_id');
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('date_of_birth');
-            $table->string('profie_picture');
-            $table->string('address');
-            $table->string('city');
-            $table->string('province');
-            $table->string('country');
+            $table->unsignedBigInteger('user_id');
+            $table->enum('status', ['PROCESSING', 'COMPLETED', 'FAILED']);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');
-
         });
     }
 
@@ -38,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('verifications');
+        Schema::dropIfExists('bet__combinations');
     }
 };

@@ -45,16 +45,23 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+
+
+    public function verification() : HasOne
+    {
+        return $this->hasOne(Verification::class);
+    }
+
+    public function bet() : HasMany
+    {
+        return $this->hasMany(Bet::class, 'user_id', 'id');
+    }
+
+    public function transaction() : HasMany
+    {
+        return $this->hasMany(Transaction::class, 'user_id', 'id');
+    }
+
    
 }
 
-class User extends Model
-{
-    /**
-     * Get the phone associated with the user.
-     */
-    public function verification() {
-        return $this->hasOne(Verification::class)
-    };
-
-}

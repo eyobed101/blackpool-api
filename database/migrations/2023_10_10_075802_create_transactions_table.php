@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
-            $table->integer('bet_id');
+            $table->BigInteger('user_id');
+            $table->BigInteger('bet_id');
             $table->string('type');
             $table->integer('amount');
             $table->date('date');
@@ -24,6 +24,9 @@ return new class extends Migration
             $table->string('status');
             $table->string('image');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('bet_id')->references('id')->on('bets');
         });
     }
 
