@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->BigInteger('user_id');
-            $table->BigInteger('bet_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('bet_id');
             $table->string('type');
             $table->integer('amount');
             $table->date('date');

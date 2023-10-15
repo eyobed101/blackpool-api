@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('bet__combinations', function (Blueprint $table) {
+        Schema::create('bet_combinations', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->enum('status', ['PROCESSING', 'COMPLETED', 'FAILED']);

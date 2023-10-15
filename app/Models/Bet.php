@@ -18,4 +18,9 @@ class Bet extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function betCombination()
+    {
+        return $this->belongsTo(BetCombination::class);
+    }
 }

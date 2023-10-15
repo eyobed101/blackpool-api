@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone_number');
             $table->enum('verification_status', ['VERIFED', 'ONBOADING', 'DISABLED']);
-            $table->integger('balance');
+            $table->integer('balance');
             $table->enum('role', ['ADMIN', 'USER', 'SUPERADMIN'])->default('USER');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
