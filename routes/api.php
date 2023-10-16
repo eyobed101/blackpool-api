@@ -23,3 +23,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/games', [SportController::class, 'getGames']);
 
 Route::get('/scores', [SportController::class, 'getScores']);
+
+Route::post('/place-bet',  [BetController::class, 'placeBet']);
+

@@ -24,8 +24,22 @@ class SportController extends Controller
 
     public function getGames()
     {
+
+        $params = [
+            'query' => [
+               'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+            ]
+         ];
         $games = Cache::remember('recent_odds', 3600, function () {
-            $response = $this->client->get('/V4/sport/upcoming/odds'); 
+            $response = $this->client->get('/v4/sports/upcoming/odds', [
+                'query' => [
+                   'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                   'regions' => "uk",
+                   'markets' => "h2h",
+                   'oddsFormat' => "decimal"
+                ]
+             ]); 
+
             return json_decode($response->getBody(), true);
         });
 
@@ -36,11 +50,12 @@ class SportController extends Controller
 
     public function getScores()
     {
-        $scores = Cache::remember('recent_scores', 60, function () {
-            $response = $this->client->get('/V4/sport/scores'); 
+        $scores = Cache::remember('recent_scores', 3600, function () {
+            $response = $this->client->get('/v4/sports/scores'); 
             return json_decode($response->getBody(), true);
         });
 
+        
         // return view('scores', compact('scores'));
         return response()->json($scores);
 
