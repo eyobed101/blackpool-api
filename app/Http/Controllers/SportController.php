@@ -7,7 +7,6 @@ use GuzzleHttp\Client;
 
 
 use Illuminate\Http\Request;
-
 class SportController extends Controller
 {
     protected $client;
@@ -17,7 +16,7 @@ class SportController extends Controller
         $this->client = new Client([
             'base_uri' => 'https://api.the-odds-api.com/V4/sport', 
             'headers' => [
-                'Authorization' => 'API_KEY', 
+                'Authorization' => '8b0b6949dd4456a8534cd76543bc3c7e', 
                 'Accept' => 'application/json',
             ],
         ]);
@@ -25,19 +24,21 @@ class SportController extends Controller
 
     public function getGames()
     {
-        $response = $this->client->get('/odds'); 
+        $games = Cache::remember('recent_odds', 60, function () {
+            $response = $this->client->get('/odds'); 
+            return json_decode($response->getBody(), true);
+        });
 
-        $Games = json_decode($response->getBody(), true);
-        
-        return view('games', compact('Games'));
+        return view('games', compact('games'));
     }
 
     public function getScores()
     {
-        $response = $this->client->get('/scores'); 
+        $scores = Cache::remember('recent_scores', 60, function () {
+            $response = $this->client->get('/scores'); 
+            return json_decode($response->getBody(), true);
+        });
 
-        $Scores = json_decode($response->getBody(), true);
-        
-        return view('scores', compact('Scores'));
+        return view('scores', compact('scores'));
     }
 }
