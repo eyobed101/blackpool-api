@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('bets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
+            $table->enum('bet_type', ['SINGLE', 'COMBO']);
             $table->string('event_id');
             $table->unsignedBigInteger('bet_combination_id')->nullable();
             $table->string('outcome');
