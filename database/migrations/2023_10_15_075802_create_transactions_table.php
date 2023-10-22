@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('status');
             $table->string('image');
             $table->timestamps();
-
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('bet_id')->references('id')->on('bets');
         });

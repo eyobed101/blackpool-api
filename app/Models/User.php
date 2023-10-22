@@ -3,10 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+// use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 
 
@@ -24,6 +25,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone_number',
+        'verification_status',
+        'balance',
+        'role',
     ];
 
     /**
@@ -61,12 +66,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(BetCombination::class);
     }
-    
+
     public function transaction() : HasMany
     {
         return $this->hasMany(Transaction::class, 'user_id', 'id');
     }
 
-   
+
 }
 

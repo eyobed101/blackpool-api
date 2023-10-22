@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('date_of_birth');
-            $table->string('profie_picture');
+            $table->string('profil_picture');
             $table->string('address');
             $table->string('city');
             $table->string('province');

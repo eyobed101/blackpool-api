@@ -9,7 +9,11 @@ class Verification extends Model
 {
     use HasFactory;
 
-
+    protected $fillable = [
+          'first_name', 'last_name', 'date_of_birth',
+          'profie_picture', 'address', 'city', 'province',
+          'country', 'user_id', 'isVerified'
+    ];
     public function user()
     {
         return $this->belongsTo(User::class);
