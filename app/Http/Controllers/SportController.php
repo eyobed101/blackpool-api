@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 class SportController extends Controller
 {
     protected $client;
+   
 
     public function __construct()
     {
@@ -22,8 +23,12 @@ class SportController extends Controller
         ]);
     }
 
-    public function getGames()
+    public function getGames(Request $request)
     {
+        $sport = $request->input('sport');
+        $region = $request->input('region');
+        $market = $request->input('market');
+
 
         $params = [
             'query' => [
@@ -31,14 +36,17 @@ class SportController extends Controller
             ]
          ];
         $games = Cache::remember('recent_odds', 3600, function () {
-            $response = $this->client->get('/v4/sports/upcoming/odds', [
+            $response = $this->client->get('/v4/sports/' . $sport . '/odds', [
                 'query' => [
                    'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                   'regions' => "uk",
-                   'markets' => "h2h",
+                   'sport' => $sport,
+                   'region' => $region,
+                   'market' => $market,
                    'oddsFormat' => "decimal"
                 ]
              ]); 
+            $output = new \Symfony\Component\Console\Output\ConsoleOutput(2);
+            $output->writeln($response->getHeader());
 
             return json_decode($response->getBody(), true);
         });
