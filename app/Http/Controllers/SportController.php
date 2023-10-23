@@ -71,11 +71,13 @@ class SportController extends Controller
         $getNCAABasketball = function () {
             $response = $this->client->get('/v4/sports/basketball_ncaab/odds',['query' => [
                 'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                'markets' => 'h2h,spreads,totals',
+                'markets' => 'h2h',
                 'regions' => 'us',
                 'oddsFormat' => 'american',
                 'bookmakers' => 'fanduel',
             ]]);
+
+
             return $response->getBody()->getContents();
 
         };
@@ -83,7 +85,7 @@ class SportController extends Controller
         $getNBA = function () {
             $response = $this->client->get('/v4/sports/basketball_nba/odds',['query' => [
                 'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                'markets' => 'h2h,spreads,totals',
+                'markets' => 'h2h',
                 'regions' => 'us',
                 'oddsFormat' => 'american',
                 'bookmakers' => 'draftkings',
@@ -276,30 +278,47 @@ class SportController extends Controller
         $sport = $request->header('sport');
 
         if ($sport == 'bascketball') {
-
             $promises = [
-                $getNCAABasketball(),
-                $getNBA()
+                Cache::remember('ncaabasketball_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/basketball_ncaab/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                }),
+                Cache::remember('nba_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/basketball_nba/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'draftkings',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
 
+                    return $contents;
+                }),
             ];
+            
+            $responseArray = Utils::all($promises)->wait();
 
-            $responseArray = Cache::remember('bascketball_array', 3600, function () use ($promises) {
-                try {
+            $result = [];
 
-                    $results = Utils::all($promises)->wait();
-                    // $results = Utils::settle( $promises );
+            foreach ($responseArray as $file) {
 
-                    return $results;
-                    
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
-            $result = $responseArray;
-            // echo "hhhh: " . $result ;
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
 
-            return json_encode($result, true);
+            
+
+            return $result;
 
 
 
