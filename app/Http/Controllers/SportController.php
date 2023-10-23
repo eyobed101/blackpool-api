@@ -325,154 +325,377 @@ class SportController extends Controller
         } elseif ($sport == 'football') {
 
             $promises = [
-                $getNCAAFootball(),
-                $getNFL(),
-                $getCFL(),
+                Cache::remember('ncaaf_americanfootball_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/americanfootball_ncaaf/odds',  ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                }),
+                Cache::remember('nfl_americanfootball_data', 3600, function () {
+                    $response =$this->client->get('/v4/sports/americanfootball_nfl/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
 
+                    return $contents;
+                }),
+                Cache::remember('cfl_americanfootball_data', 3600, function () {
+                    $response =$this->client->get('/v4/sports/americanfootball_cfl/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
             ];
 
-            $responseArray = Cache::remember('football_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
 
         }
         elseif ($sport == 'cricket') {
-            $promises = [
-                $getIPL(),
-                
+           
 
+            $promises = [
+                Cache::remember('ipl_cricket_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/cricket_ipl/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                })
             ];
 
-            $responseArray = Cache::remember('cricket_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
         }
         elseif ($sport == 'tennis') {
-            $promises = [
-                $getWTAFOpen(),
-                $getATPAOpen(),
-                
+            
 
+            $promises = [
+                Cache::remember('tennis_atp_french_open_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/tennis_atp_french_open/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                }),
+                Cache::remember('tennis_atp_aus_open_singles_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
             ];
 
-            $responseArray = Cache::remember('tennis_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
         }
         elseif ($sport == 'golf') {
-            $promises = [
-                $getPGACWinner()
-                
+            
 
+            $promises = [
+                Cache::remember('golf_pga_championship_winner_data', 3600, function () {
+                    $response =$this->client->get('/v4/sports/golf_pga_championship_winner/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                })
             ];
 
-            $responseArray = Cache::remember('golf_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
         }
         elseif ($sport == 'baseball') {
+            
             $promises = [
-                $getMLB()
-                
-
+                Cache::remember('baseball_mlb_data', 3600, function () {
+                    $response =  $this->client->get('/v4/sports/baseball_mlb/odds',['query' => [
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                })
             ];
 
-            $responseArray = Cache::remember('baseball_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
         }
         elseif ($sport == 'soccer') {
-            $promises = [
-                $getEPL(),
-                $getEFLC(),
-                $getUEFACLeague(),
-                $getChampionship(),
-                $getGBundesliga(),
-                $getLaSpain(),
-                $getFACup(),
-                $getBrazilSA(),
-                $getTurkeyLeague(),
-                $getLigue1(),
-                $getALeague(),
-                $getSuperChina(),
-                
+            
 
+            $promises = [
+                Cache::remember('soccer_epl_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_epl/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                }),
+                Cache::remember('soccer_england_efl_cup_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_england_efl_cup/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_uefa_champs_league_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_uefa_champs_league/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_efl_champ_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_efl_champ/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_germany_bundesliga_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_germany_bundesliga/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_spain_la_liga_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_spain_la_liga/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'american',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_fa_cup_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_fa_cup/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_brazil_campeonato_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_brazil_campeonato/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_turkey_super_league_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_turkey_super_league/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_england_league1_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_england_league1/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_australia_aleague_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_australia_aleague/odds',['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('soccer_china_superleague_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/soccer_china_superleague/odds', ['query' => [
+                        'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                        'markets' => 'h2h,spreads,totals',
+                        'regions' => 'us',
+                        'oddsFormat' => 'decimal',
+                        'bookmakers' => 'fanduel',
+                    ]]);
+            
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
             ];
 
-            $responseArray = Cache::remember('soccer_array', 3600, function () use ($promises) {
-                try {
-                    $results = Utils::unwrap($promises);
-                    return json_encode($results);
+            $responseArray = Utils::all($promises)->wait();
 
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
+            $result = [];
 
-            $result = json_decode($responseArray, true);
+            foreach ($responseArray as $file) {
 
-            return response()->json($result);
+                $decodedFile = json_decode($file);
+                $result = array_merge($result, $decodedFile);
+            }
+
+            
+
+            return $result;
 
         }else {
             echo "nothing is happening";
