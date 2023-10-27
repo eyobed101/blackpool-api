@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 class SportController extends Controller
 {
     protected $client;
-   
+
 
     public function __construct()
     {
@@ -29,7 +29,7 @@ class SportController extends Controller
         ]);
     }
 
-    public function getGames(Request $requestRequest $request)
+    public function getGames(tRequest $request)
     {
         $sport = $request->input('sport');
         $region = $request->input('region');
@@ -81,6 +81,9 @@ class SportController extends Controller
                 'oddsFormat' => 'american',
                 'bookmakers' => 'fanduel',
             ]]);
+            foreach ($response->getHeaders() as $name => $values) {
+                echo $name . ': ' . implode(', ', $values) . "\r\n";
+            } 
             return $response->getBody()->getContents();
 
         };
@@ -287,23 +290,23 @@ class SportController extends Controller
                 $getNBA()
 
             ];
-
-            $responseArray = Cache::remember('bascketball_array', 3600, function () use ($promises) {
-                try {
-
-                    $results = Utils::all($promises)->wait();
-                    // $results = Utils::settle( $promises );
-
-                    return $results;
-                    
-                } catch (\Exception $e) {
-                    $errorMessage = $e->getMessage();
-                    return ['error' => $errorMessage];
-                }
-            });
-            $result = $responseArray;
+           
+                $responseArray = Cache::remember('bascketball_array', 3600, function () use ($promises) {
+                    try {
+    
+                        $results = Utils::all($promises)->wait();
+                        // $results = Utils::settle( $promises );
+    
+                        return $results;
+                        
+                    } catch (\Exception $e) {
+                        $errorMessage = $e->getMessage();
+                        return ['error' => $errorMessage];
+                    }
+                });
+                $result = $responseArray;
             // echo "hhhh: " . $result ;
-
+    
             return json_encode($result, true);
 
 
