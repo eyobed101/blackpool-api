@@ -16,13 +16,12 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('bet_id');
-            $table->string('type');
+            $table->unsignedBigInteger('bet_id')->nullable(true);
+            $table->enum('type', ['WITHDRAW', 'DEPOSIT']);
             $table->integer('amount');
-            $table->date('date');
-            $table->string('crypto_type');
-            $table->string('status');
-            $table->string('image');
+            $table->string('crypto_type')->nullable(true);
+            $table->enum('status', ["SUCCESS", "PENDING", "FAILED"]);
+            $table->string('image')->nullable(true);
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('bet_id')->references('id')->on('bets');

@@ -7,6 +7,8 @@ use  App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Exception;
 class AuthController extends Controller
 {
     /**
@@ -60,7 +62,7 @@ class AuthController extends Controller
                 $response = ['token' => $token];
                 return response()->json($response, 200);
             } else {
-                $response = ["message" => "Password mismatch"];
+                $response = ["message" => "wrong username or password"];
                 return response()->json($response, 422);
             }
         } else {
@@ -72,6 +74,18 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         return response()->json(['success' => $user], 200);
+    }
+
+    public function GetAllUsers()
+    {
+          try {
+             $users = User::all()->where('role', '=', 'USER');
+             return response()->json($users, 200);
+          } catch (Exception $e)
+          {
+               Log::error($e->getMessage());
+               return response()->json(["error" => "something went wrong"]);
+          }
     }
     /**
      * Store a newly created resource in storage.

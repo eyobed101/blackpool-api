@@ -18,7 +18,7 @@ class VerificationController extends Controller
                  'first_name' => 'required',
                  'last_name' => 'required',
                  'date_of_birth' => 'required',
-                 'profie_picture' => 'required',
+                 'profil_picture' => 'required',
                  'address' => 'required',
                  'city' => 'required',
                  'province' => 'required',
@@ -69,14 +69,41 @@ class VerificationController extends Controller
               if(is_null($user)) {
                   return response()->json(["error" => "user doesn't exist"], 404);
               }
-              $user->verification_status = "VERIFED";
+              $user_verification = Verification::where('user_id', '=', $user->id)->get();
+              $user_verification[0]->isVerified = true;
+              $user_verification[0]->save();
+              $user->verification_status = "VERIFIED";
               $user->save();
               Log::info("verified the user " . strval($user));
               return response()->json(["user" => $user], 200);
         } catch (Exception $e) {
              Log::info($e->getMessage());
-
+             return response()->json(['error' => "something went wrong"], 500);
         }
     }
+    public function adminDisableUser(Request $request)
+    {
+         $validator = Validator::make($request->all(), [
+              'user_id' => 'required'
+         ]);
+         // check if request is valid
+         if($validator->fails()) {
+               return response()->json(['error' => $validator]);
+         }
+         try {
+             $user = User::find($request->user_id);
+             if(is_null($user)) {
+                 return response()->json(["error" => "user doesn't exist"], 404);
+             }
+             $user->verification_status = "DISABLED";
+             $user->save();
+             Log::info("disabled the user " . strval($user));
+             return response()->json(["user" => $user]);
+         } catch(Exception $e) {
+              Log::error($e->getMessage());
+              return response(["error" => "something went wrong please try again"]);
+         }
+    }
+
 }
 
