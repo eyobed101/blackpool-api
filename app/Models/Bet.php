@@ -9,12 +9,16 @@ class Bet extends Model
 {
     use HasFactory;
 
-    public function user() : BelongsTo
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $fillable = ['id','user_id', "bet_combination_id","bet_type","event_id","outcome","bet_amount","potential_payout","status"];
+
+    public function user() 
     {
         return $this->belongsTo(User::class);
     }
 
-    public function transaction() : HasMany
+    public function transaction() 
     {
         return $this->hasMany(Transaction::class);
     }

@@ -6,72 +6,83 @@ use Illuminate\Http\Request;
 use App\Models\Bet;
 use App\Models\BetCombination;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+
+use Illuminate\Support\Str;
 
 class BetController extends Controller
 {
     public function placeBet(Request $request)
     {
         $user = auth()->user();
+        try {
 
-        $isComboBet = $request->has('is_combo_bet') && $request->input('is_combo_bet');
+            $selectedPrice = $request->input("selected_price");
 
-        if ($isComboBet) {
+            $isComboBet = $request->has('is_combo_bet') && $request->input('is_combo_bet');
 
-        $selectedEvents = $request->input('selected_events');
-        $selectedOutcomes = $request->input('selected_outcomes');
-        $betAmounts = $request->input('bet_amounts');
+            if ($isComboBet) {
+                $selectedEvents = $request->input('selected_events');
+                $selectedOutcomes = $request->input('selected_outcomes');
+                $betAmounts = $request->input('bet_amounts');
 
-        $betCombination = new BetCombination();
-        $betCombination->user_id = $user->id;
-        $betCombination->status = 'PROCESSING'; 
-        $betCombination->save();
 
-        for ($i = 0; $i < count($selectedEvents); $i++) {
-            $bet = new Bet();
-            $bet->user_id = $user->id;
-            $bet->bet_combination_id = $betCombination->id;
-            $bet->bet_type = 'COMBO';
-            $bet->event_id = $selectedEvents[$i];
-            $bet->outcome = $selectedOutcomes[$i];
-            $bet->bet_amount = $betAmounts[$i];
-            $bet->potential_payout = $betAmounts[$i] * $selectedPrice;
-            $bet->status = 'PROCESSING';
-            $bet->save();
+                
+
+
+                $betCombination = BetCombination::firstOrCreate([
+                    "id" => Str::random(32),
+                    "user_id" => 2,
+                    "status" => 'PROCESSING'
+                ]);
+                for ($i = 0; $i < count($selectedEvents); $i++) {
+                    $ID = Str::random(32);
+
+                    $bet = Bet::firstOrCreate([
+                    'id'=> $ID,
+                    "user_id" => 2,
+                    "bet_combination_id" => $betCombination->id,
+                    "bet_type" => 'COMBO',
+                    "event_id" => $selectedEvents[$i],
+                    "outcome" => $selectedOutcomes[$i],
+                    "bet_amount" => $betAmounts[$i],
+                    "potential_payout" => $betAmounts[$i] * $selectedPrice,
+                    "status" => 'PROCESSING',
+                    ]);
+                }
+
+
+
+                
+
+            } else {
+                $eventId = $request->input('event_id');
+                $selectedOutcome = $request->input('outcome');
+
+                $betAmount = $request->input('bet_amount');
+
+                $ID = Str::random(32);
+
+                $bet = Bet::firstOrCreate([
+                    'id'=> $ID,
+                    "user_id" => 2,
+                    "bet_type" => 'SINGLE',
+                    "event_id" => $eventId,
+                    "outcome" => $selectedOutcome,
+                    "bet_amount" => $betAmount[0],
+                    "potential_payout" => $betAmount[0] * $selectedPrice,
+                    "status" => 'PROCESSING',
+                    ]);
+            }
+           
+            // User::where('id', $user->id)->decrement('balance', $selectedPrice);
+
+
+            return response()->json(['message' => 'Bet placed successfully']);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json($e->getMessage(), 500);
         }
-
-        $user->balance -= array_sum($betAmounts);
-        $user->save();
-    }
-
-        $request->validate([
-            'event_id' => 'required',
-            'outcome' => 'required',
-            'bet_amount' => 'required|numeric|min:0',
-        ]);
-
-        
-
-        $eventId = $request->input('event_id');
-        $selectedOutcome = $request->input('outcome');
-        $selectedPrice = $request->input('price'); 
-
-        $betAmount = $request->input('bet_amount');
-        $potentialPayout = $betAmount * $selectedPrice;
-
-        $bet = new Bet();
-        $bet->user_id = $user->id;
-        $bet->event_id = $eventId;
-        $bet->bet_type = 'SINGLE';
-        $bet->outcome = $selectedOutcome;
-        $bet->bet_amount = $betAmount;
-        $bet->potential_payout = $potentialPayout;
-        $bet->status = 'PROCESSING'; 
-        $bet->save();
-
-        $user->balance -= $betAmount;
-        $user->save();
-
-        return response()->json(['message' => 'Bet placed successfully']);
     }
 }
 

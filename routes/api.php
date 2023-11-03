@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settlement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SportController;
@@ -26,5 +27,7 @@ Route::get('/games', [SportController::class, 'getGames']);
 
 Route::get('/scores', [ScoreController::class, 'getScores']);
 
-Route::post('/place-bet',  [BetController::class, 'placeBet']);
+Route::post('/placebet',  [BetController::class, 'placeBet']);
+
+Route::post('/settlement',  [Settlement::class, 'checkBetOutcome']);
 

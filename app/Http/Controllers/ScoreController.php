@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Utils;
 use GuzzleHttp\Promise\Promise;
+use App\Models\Scores;
+use Carbon\Carbon;
 
 class ScoreController extends Controller
 {
@@ -16,13 +18,11 @@ class ScoreController extends Controller
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => 'https://api.the-scores-api.com',
+            'base_uri' => 'https://api.the-odds-api.com',
             'headers' => [
                 'Accept' => 'application/json',
             ],
-            'query' =>[
-                'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-            ]
+
         ]);
     }
 
@@ -36,24 +36,95 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/basketball_ncaab/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',                        ]
+                    ]);
+
+                    $contents = $response->getBody()->getContents();
+                    return $contents;
+                }),
+
+
+                Cache::remember('nba_score_score_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/basketball_nba/scores', [
+                        'query' => [
+                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                            'daysFrom' => '1',                         
+                        ]
+                    ]);
+
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+            ];
+
+            $responseArray = Utils::all($promises)->wait();
+
+            $result = [];
+
+            foreach ($responseArray as $file) {
+
+                $decodedFile = json_decode($file);
+
+
+                $result = array_merge($result, $decodedFile);
+
+            }
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
+
+
+                }
+            }
+            return $result;
+
+
+
+        } elseif ($sport == 'football') {
+
+            $promises = [
+                Cache::remember('ncaaf_americanfootball_score_score_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/americanfootball_ncaaf/scores', [
+                        'query' => [
+                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                            'daysFrom' => '1',
                         ]
                     ]);
 
                     $contents = $response->getBody()->getContents();
                     return $contents;
                 }),
-                Cache::remember('nba_score_score_data', 3600, function () {
-                    $response = $this->client->get('/v4/sports/basketball_nba/scores', [
+                Cache::remember('nfl_americanfootball_score_score_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/americanfootball_nfl/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'draftkings',
+                            'daysFrom' => '1',
+                        ]
+                    ]);
+
+                    $contents = $response->getBody()->getContents();
+
+                    return $contents;
+                }),
+                Cache::remember('cfl_americanfootball_score_data', 3600, function () {
+                    $response = $this->client->get('/v4/sports/americanfootball_cfl/scores', [
+                        'query' => [
+                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                            'daysFrom' => '1',
                         ]
                     ]);
 
@@ -73,69 +144,25 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
-
-
-            return $result;
-
-
-
-        } elseif ($sport == 'football') {
-
-            $promises = [
-                Cache::remember('ncaaf_americanfootball_score_score_data', 3600, function () {
-                    $response = $this->client->get('/v4/sports/americanfootball_ncaaf/scores', [
-                        'query' => [
-                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
-                        ]
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
                     ]);
 
-                    $contents = $response->getBody()->getContents();
-                    return $contents;
-                }),
-                Cache::remember('nfl_americanfootball_score_score_data', 3600, function () {
-                    $response = $this->client->get('/v4/sports/americanfootball_nfl/scores', [
-                        'query' => [
-                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
-                        ]
-                    ]);
 
-                    $contents = $response->getBody()->getContents();
-
-                    return $contents;
-                }),
-                Cache::remember('cfl_americanfootball_score_data', 3600, function () {
-                    $response = $this->client->get('/v4/sports/americanfootball_cfl/scores', [
-                        'query' => [
-                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
-                        ]
-                    ]);
-
-                    $contents = $response->getBody()->getContents();
-
-                    return $contents;
-                }),
-            ];
-
-            $responseArray = Utils::all($promises)->wait();
-
-            $result = [];
-
-            foreach ($responseArray as $file) {
-
-                $decodedFile = json_decode($file);
-                $result = array_merge($result, $decodedFile);
+                }
             }
 
 
@@ -151,10 +178,7 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/cricket_ipl/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
                         ]
                     ]);
 
@@ -173,7 +197,26 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
 
+
+                }
+            }
 
             return $result;
 
@@ -185,10 +228,7 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/tennis_atp_french_open/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
                         ]
                     ]);
 
@@ -199,10 +239,7 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
                         ]
                     ]);
 
@@ -222,7 +259,26 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
 
+
+                }
+            }
 
             return $result;
 
@@ -234,10 +290,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/golf_pga_championship_winner/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -256,7 +310,26 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
 
+
+                }
+            }
 
             return $result;
 
@@ -266,10 +339,9 @@ class ScoreController extends Controller
                 Cache::remember('baseball_mlb_score_data', 3600, function () {
                     $response = $this->client->get('/v4/sports/baseball_mlb/scores', [
                         'query' => [
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -288,7 +360,26 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
 
+
+                }
+            }
 
             return $result;
 
@@ -300,10 +391,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_epl/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -314,10 +403,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_england_efl_cup/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -329,10 +416,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_uefa_champs_league/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -344,10 +429,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_efl_champ/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -359,10 +442,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_germany_bundesliga/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
                     $contents = $response->getBody()->getContents();
@@ -373,10 +454,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_spain_la_liga/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'american',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -388,10 +467,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_fa_cup/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -403,10 +480,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_brazil_campeonato/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -418,10 +493,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_turkey_super_league/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -433,10 +506,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_england_league1/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -448,10 +519,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_australia_aleague/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
                     $contents = $response->getBody()->getContents();
@@ -462,10 +531,8 @@ class ScoreController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_china_superleague/scores', [
                         'query' => [
                             'apiKey' => "8b0b6949dd4456a8534cd76543bc3c7e",
-                            'markets' => 'h2h,spreads,totals',
-                            'regions' => 'us',
-                            'scoresFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'daysFrom' => '1',
+
                         ]
                     ]);
 
@@ -485,6 +552,26 @@ class ScoreController extends Controller
                 $result = array_merge($result, $decodedFile);
             }
 
+            foreach ($result as $file) {
+                if ($file->completed) {
+                    $commenceTime = Carbon::parse($file->commence_time)->toDateTimeString();
+                    $lastUpdate = Carbon::parse($file->last_update)->toDateTimeString();
+                    Scores::firstOrCreate([
+                        'id' => $file->id,
+                        'sport_key' => $file->sport_key,
+                        'commence_time' => $commenceTime,
+                        'home_team' => $file->home_team,
+                        'away_team' => $file->away_team,
+                    ], [
+                        'sport_title' => $file->sport_title,
+                        'completed' => $file->completed,
+                        'scores' => json_encode($file->scores),
+                        'last_update' => $lastUpdate,
+                    ]);
+
+
+                }
+            }
 
 
             return $result;
