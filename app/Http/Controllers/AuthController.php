@@ -79,7 +79,7 @@ class AuthController extends Controller
     public function GetAllUsers()
     {
           try {
-             $users = User::all()->where('role', '=', 'USER');
+             $users = User::all()->where('role', '=', 'USER')->with('transaction');
              return response()->json($users, 200);
           } catch (Exception $e)
           {

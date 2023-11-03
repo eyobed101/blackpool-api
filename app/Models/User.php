@@ -52,12 +52,12 @@ class User extends Authenticatable
 
 
 
-    public function verification() : HasOne
+    public function verification()
     {
         return $this->hasOne(Verification::class);
     }
 
-    public function bet() : HasMany
+    public function bet()
     {
         return $this->hasMany(Bet::class, 'user_id', 'id');
     }
@@ -67,7 +67,7 @@ class User extends Authenticatable
         return $this->hasMany(BetCombination::class);
     }
 
-    public function transaction() : HasMany
+    public function transaction()
     {
         return $this->hasMany(Transaction::class, 'user_id', 'id');
     }

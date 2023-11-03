@@ -30,6 +30,7 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function(){
     Route::post('verifications', [VerificationController::class, 'uploadVerification']);
     Route::post('deposit', [TransactionController::class, 'userAccountDeposit']);
     Route::post('withdraw', [TransactionController::class, 'userRequestWithdrawal']);
+    Route::get('history', [TransactionController::class, 'userGetHistory']);
 });
 Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function() {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
@@ -40,6 +41,8 @@ Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], funct
     Route::post("admin/deposit/disapprove", [TransactionController::class, 'adminDisapproveDeposit']);
     Route::get("admin/withdrawals/get", [TransactionController::class, 'adminGetWithdrawalRequests']);
     Route::post("admin/withdrawals/approve", [TransactionController::class, 'adminApproveWithdrawalRequest']);
+    Route::post("admin/withdrawals/disapprove", [TransactionController::class, 'adminDisapproveWithdrawalRequest']);
+    Route::get('admin/transactions/get', [TransactionController::class, 'admnGetAllTransactions']);
     Route::get("admin/users/get", [AuthController::class,'GetAllUsers']);
 });
 

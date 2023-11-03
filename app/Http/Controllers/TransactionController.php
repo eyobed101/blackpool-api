@@ -178,6 +178,15 @@ class TransactionController extends Controller
               {
                    return response()->json(["error" => "request not pending"], 404);
               }
+              $user = User::where('id', '=', $withdraw_requests->user_id)->get();
+              if($user[0]->balance < $withdraw_requests->amount)
+              {
+                   $withdraw_requests->status  = "FAILED";
+                   $withdraw_requests->save();
+                   return response()->json(["error" => "user has insufficient balance"]);
+              }
+              $user[0]->balance = $user[0]->balance - $withdraw_requests->amount;
+              $user[0]->save();
               $withdraw_requests->status = "SUCCESS";
               $withdraw_requests->save();
               return response()->json(["transactions" => $withdraw_requests], 200);
@@ -186,4 +195,56 @@ class TransactionController extends Controller
               return response(["error" => "something went wrong"]);
          }
     }
+    public function adminDisapproveWithdrawalRequest(Request $request)
+    {
+     try {
+          $validator = Validator::make($request->all(), [
+              "transaction_id"  => "required"
+          ]);
+          if($validator->fails()) {
+              return response()->json(["error" => $validator->error()]);
+          }
+          $withdraw_requests = Transaction::find($request->transaction_id);
+          if(is_null($withdraw_requests))
+          {
+              return response()->json(["error" => "withdraw request doesn't exist"], 404);
+          }
+          if($withdraw_requests->status != "PENDING")
+          {
+               return response()->json(["error" => "request not pending"], 404);
+          }
+          $withdraw_requests->status = "FAILED";
+          $withdraw_requests->save();
+          return response()->json(["transactions" => $withdraw_requests], 200);
+     } catch (Exception $e) {
+          Log::info($e->getMessage());
+          return response(["error" => "something went wrong"]);
+     }
+    }
+    public function adminGetAllTransactions()
+    {
+          try {
+              // admin get all transactions
+           $all_transactions = Transaction::all();
+           return response()->json($all_transactions, 200);
+          } catch (Exception $e) {
+              Log::error($e->getMessage());
+              return response()->json(['error' => "something went wrong, error occured"], 500);
+          }
+
+    }
+
+    public function userGetHistory()
+    {
+        try {
+             $user_id = Auth::user()->id;
+             $transaction_list = Transaction::where('user_id', '=', $user_id)->get();
+             return response()->json(["transaction" => $transaction_list], 200);
+        } catch(Exception $e) {
+             Log::error($e->getMessage());
+             return response()->json(["error" => "something went wrog please try again"]);
+        }
+    }
+
+
 }
