@@ -66,8 +66,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(BetCombination::class);
     }
-
-    public function transaction()
+    
+    public function transaction() 
     {
         return $this->hasMany(Transaction::class, 'user_id', 'id');
     }

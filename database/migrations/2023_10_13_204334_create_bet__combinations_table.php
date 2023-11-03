@@ -4,18 +4,19 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
      */
+
+
     public function up()
     {
         Schema::create('bet_combinations', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->string('id', 32)->unique();
+            $table->unsignedBigInteger('user_id')->fillable();
             $table->enum('status', ['PROCESSING', 'COMPLETED', 'FAILED']);
             $table->timestamps();
 

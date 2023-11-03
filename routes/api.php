@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\Settlement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SportController;
+use App\Http\Controllers\ScoreController;
+use App\Http\Controllers\BetController;
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\TransactionController;
@@ -25,14 +30,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::post('login', 'API\AuthController@login');
 Route::post('register', [AuthController::class, 'create']);
 Route::post('login', [AuthController::class, 'login']);
-Route::group(['middleware' => ['auth:api', 'json.response']], function(){
+Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::get('details', [AuthController::class, 'details']);
     Route::post('verifications', [VerificationController::class, 'uploadVerification']);
     Route::post('deposit', [TransactionController::class, 'userAccountDeposit']);
     Route::post('withdraw', [TransactionController::class, 'userRequestWithdrawal']);
     Route::get('history', [TransactionController::class, 'userGetHistory']);
 });
-Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function() {
+Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function () {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
     Route::post('admin/verifications/post', [VerificationController::class, 'adminActivateUser']);
     Route::post('admin/verifications/disable', [VerificationController::class, 'adminDisableUser']);
@@ -43,6 +48,16 @@ Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], funct
     Route::post("admin/withdrawals/approve", [TransactionController::class, 'adminApproveWithdrawalRequest']);
     Route::post("admin/withdrawals/disapprove", [TransactionController::class, 'adminDisapproveWithdrawalRequest']);
     Route::get('admin/transactions/get', [TransactionController::class, 'admnGetAllTransactions']);
-    Route::get("admin/users/get", [AuthController::class,'GetAllUsers']);
+    Route::get("admin/users/get", [AuthController::class, 'GetAllUsers']);
 });
+
+
+Route::get('/games', [SportController::class, 'getGames']);
+
+Route::get('/scores', [ScoreController::class, 'getScores']);
+
+Route::post('/placebet',  [BetController::class, 'placeBet']);
+
+Route::post('/settlement',  [Settlement::class, 'checkBetOutcome']);
+
 

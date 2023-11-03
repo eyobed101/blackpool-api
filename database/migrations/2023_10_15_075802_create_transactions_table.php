@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
+            $table->string('id', 32)->unique();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('bet_id')->nullable(true);
             $table->enum('type', ['WITHDRAW', 'DEPOSIT']);
