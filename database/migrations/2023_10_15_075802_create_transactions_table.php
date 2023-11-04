@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->string('id', 32)->unique();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('bet_id')->nullable(true);
             $table->enum('type', ['WITHDRAW', 'DEPOSIT']);
             $table->integer('amount');
             $table->string('crypto_type')->nullable(true);
@@ -24,7 +23,6 @@ return new class extends Migration
             $table->string('image')->nullable(true);
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('bet_id')->references('id')->on('bets');
         });
     }
 
