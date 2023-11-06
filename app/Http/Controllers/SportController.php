@@ -39,7 +39,7 @@ class SportController extends Controller
 
             $ncaabasketballData = Cache::remember(
                 'ncaabasketball_data',
-                3600,
+                180,
                 function () {
                     $response = $this->client->get('/v4/sports/basketball_ncaab/odds', [
                         'query' => [
@@ -69,7 +69,7 @@ class SportController extends Controller
                     return json_decode($contents, true);
                 }
             );
-            $nbaData = Cache::remember('nba_data', 3600, function () {
+            $nbaData = Cache::remember('nba_data', 180, function () {
                 $response = $this->client->get('/v4/sports/basketball_nba/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -219,7 +219,7 @@ class SportController extends Controller
         } elseif ($sport == 'football') {
 
             $ncaafootballData =
-                Cache::remember('ncaaf_americanfootball_data', 3600, function () {
+                Cache::remember('ncaaf_americanfootball_data', 180, function () {
                     $response = $this->client->get('/v4/sports/americanfootball_ncaaf/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -234,7 +234,7 @@ class SportController extends Controller
                     return json_decode($contents, true);
                 });
 
-            $nflfootballData = Cache::remember('nfl_americanfootball_data', 3600, function () {
+            $nflfootballData = Cache::remember('nfl_americanfootball_data', 180, function () {
                 $response = $this->client->get('/v4/sports/americanfootball_nfl/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -250,7 +250,7 @@ class SportController extends Controller
                 return json_decode($contents, true);
             });
 
-            $cflfootballData = Cache::remember('cfl_americanfootball_data', 3600, function () {
+            $cflfootballData = Cache::remember('cfl_americanfootball_data', 180, function () {
                 $response = $this->client->get('/v4/sports/americanfootball_cfl/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -438,7 +438,7 @@ class SportController extends Controller
         } elseif ($sport == 'upcoming') {
 
             $upcomingData =
-                Cache::remember('upcoming_data', 3600, function () {
+                Cache::remember('upcoming_data', 180, function () {
                     $response = $this->client->get('/v4/sports/upcoming/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -527,7 +527,7 @@ class SportController extends Controller
 
 
             $iplcricketData =
-                Cache::remember('ipl_cricket_data', 3600, function () {
+                Cache::remember('ipl_cricket_data', 180, function () {
                     $response = $this->client->get('/v4/sports/cricket_ipl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -613,7 +613,7 @@ class SportController extends Controller
 
 
             $frenchtennisData =
-                Cache::remember('tennis_atp_french_open_data', 3600, function () {
+                Cache::remember('tennis_atp_french_open_data', 180, function () {
                     $response = $this->client->get('/v4/sports/tennis_atp_french_open/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -629,7 +629,7 @@ class SportController extends Controller
                     return json_decode($contents, true);
                 });
 
-            $austennisData = Cache::remember('tennis_atp_aus_open_singles_data', 3600, function () {
+            $austennisData = Cache::remember('tennis_atp_aus_open_singles_data', 180, function () {
                 $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -765,7 +765,7 @@ class SportController extends Controller
 
 
             $pgagolfData =
-                Cache::remember('golf_pga_championship_winner_data', 3600, function () {
+                Cache::remember('golf_pga_championship_winner_data', 180, function () {
                     $response = $this->client->get('/v4/sports/golf_pga_championship_winner/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -850,7 +850,7 @@ class SportController extends Controller
         } elseif ($sport == 'baseball') {
 
             $mlbbaseballData =
-                Cache::remember('baseball_mlb_data', 3600, function () {
+                Cache::remember('baseball_mlb_data', 180, function () {
                     $response = $this->client->get('/v4/sports/baseball_mlb/odds', [
                         'query' => [
                             'markets' => 'h2h,spreads,totals',
@@ -936,7 +936,7 @@ class SportController extends Controller
 
 
             $eplsoccerData =
-                Cache::remember('soccer_epl_data', 3600, function () {
+                Cache::remember('soccer_epl_data', 180, function () {
                     $response = $this->client->get('/v4/sports/soccer_epl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -1003,7 +1003,7 @@ class SportController extends Controller
                 }
             }
 
-            $eflcupData = Cache::remember('soccer_england_efl_cup_data', 3600, function () {
+            $eflcupData = Cache::remember('soccer_england_efl_cup_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_england_efl_cup/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1071,7 +1071,7 @@ class SportController extends Controller
                 }
             }
 
-            $uefaData = Cache::remember('soccer_uefa_champs_league_data', 3600, function () {
+            $uefaData = Cache::remember('soccer_uefa_champs_league_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_uefa_champs_league/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1138,7 +1138,7 @@ class SportController extends Controller
                 }
             }
 
-            $champData = Cache::remember('soccer_efl_champ_data', 3600, function () {
+            $champData = Cache::remember('soccer_efl_champ_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_efl_champ/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1207,7 +1207,7 @@ class SportController extends Controller
             }
 
 
-            $bundesligaData = Cache::remember('soccer_germany_bundesliga_data', 3600, function () {
+            $bundesligaData = Cache::remember('soccer_germany_bundesliga_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_germany_bundesliga/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1273,7 +1273,7 @@ class SportController extends Controller
                 }
             }
 
-            $laligadata = Cache::remember('soccer_spain_la_liga_data', 3600, function () {
+            $laligaData = Cache::remember('soccer_spain_la_liga_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_spain_la_liga/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1341,7 +1341,7 @@ class SportController extends Controller
                 }
             }
 
-            $facupData = Cache::remember('soccer_fa_cup_data', 3600, function () {
+            $facupData = Cache::remember('soccer_fa_cup_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_fa_cup/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1412,7 +1412,7 @@ class SportController extends Controller
             }
 
 
-            $campeonatoData = Cache::remember('soccer_brazil_campeonato_data', 3600, function () {
+            $campeonatoData = Cache::remember('soccer_brazil_campeonato_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_brazil_campeonato/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1479,7 +1479,7 @@ class SportController extends Controller
                 }
             }
 
-            $turkeysuperData = Cache::remember('soccer_turkey_super_league_data', 3600, function () {
+            $turkeysuperData = Cache::remember('soccer_turkey_super_league_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_turkey_super_league/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1546,7 +1546,7 @@ class SportController extends Controller
                 }
             }
 
-            $englandData = Cache::remember('soccer_england_league1_data', 3600, function () {
+            $englandData = Cache::remember('soccer_england_league1_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_england_league1/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1613,7 +1613,7 @@ class SportController extends Controller
                 }
             }
 
-            $australiaData = Cache::remember('soccer_australia_aleague_data', 3600, function () {
+            $australiaData = Cache::remember('soccer_australia_aleague_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_australia_aleague/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1679,7 +1679,7 @@ class SportController extends Controller
                 }
             }
 
-            $chinasuperData = Cache::remember('soccer_china_superleague_data', 3600, function () {
+            $chinasuperData = Cache::remember('soccer_china_superleague_data', 180, function () {
                 $response = $this->client->get('/v4/sports/soccer_china_superleague/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1747,7 +1747,7 @@ class SportController extends Controller
                 }
             }
 
-            $responseArray = Utils::all([$eplsoccerData, $eflcupDatam, $uefaData, $champData, $bundesligaData, $laligadata, $facupData, $campeonatoData, $turkeysuperData, $englandData, $australiaData, $chinasuperData])->wait();
+            $responseArray = Utils::all([$eplsoccerData, $eflcupData, $uefaData, $champData, $bundesligaData, $laligaData, $facupData, $campeonatoData, $turkeysuperData, $englandData, $australiaData, $chinasuperData])->wait();
 
             $result = [];
 
@@ -1767,7 +1767,7 @@ class SportController extends Controller
     }
     public function getScores()
     {
-        $scores = Cache::remember('recent_scores', 3600, function () {
+        $scores = Cache::remember('recent_scores', 180, function () {
             $response = $this->client->get('/v4/sports/scores');
 
             return json_decode($response->getBody(), true);

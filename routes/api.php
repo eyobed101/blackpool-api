@@ -36,6 +36,10 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::post('deposit', [TransactionController::class, 'userAccountDeposit']);
     Route::post('withdraw', [TransactionController::class, 'userRequestWithdrawal']);
     Route::get('history', [TransactionController::class, 'userGetHistory']);
+    Route::post('placebet',  [BetController::class, 'placeBet']);
+    Route::post('settlement',  [Settlement::class, 'checkBetOutcome']);
+
+
 });
 Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function () {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
@@ -56,8 +60,6 @@ Route::get('/games', [SportController::class, 'getGames']);
 
 Route::get('/scores', [ScoreController::class, 'getScores']);
 
-Route::post('/placebet',  [BetController::class, 'placeBet']);
 
-Route::post('/settlement',  [Settlement::class, 'checkBetOutcome']);
 
 

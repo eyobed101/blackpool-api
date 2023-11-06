@@ -22,9 +22,9 @@ class BetController extends Controller
             $isComboBet = $request->has('is_combo_bet') && $request->input('is_combo_bet');
 
             if ($isComboBet) {
-                $selectedEvents = $request->input('selected_events');
-                $selectedOutcomes = $request->input('selected_outcomes');
-                $betAmounts = $request->input('bet_amounts');
+                $selectedEvents = $request->input('event_id');
+                $selectedOutcomes = $request->input('outcome');
+                $betAmounts = $request->input('bet_amount');
 
 
                 
@@ -32,7 +32,7 @@ class BetController extends Controller
 
                 $betCombination = BetCombination::firstOrCreate([
                     "id" => Str::random(32),
-                    "user_id" => 2,
+                    "user_id" => $user->id,
                     "status" => 'PROCESSING'
                 ]);
                 for ($i = 0; $i < count($selectedEvents); $i++) {
@@ -40,7 +40,7 @@ class BetController extends Controller
 
                     $bet = Bet::firstOrCreate([
                     'id'=> $ID,
-                    "user_id" => 2,
+                    "user_id" =>  $user->id,
                     "bet_combination_id" => $betCombination->id,
                     "bet_type" => 'COMBO',
                     "event_id" => $selectedEvents[$i],
@@ -65,17 +65,17 @@ class BetController extends Controller
 
                 $bet = Bet::firstOrCreate([
                     'id'=> $ID,
-                    "user_id" => 2,
+                    "user_id" =>  $user->id,
                     "bet_type" => 'SINGLE',
-                    "event_id" => $eventId,
-                    "outcome" => $selectedOutcome,
+                    "event_id" => $eventId[0],
+                    "outcome" => $selectedOutcome[0],
                     "bet_amount" => $betAmount[0],
                     "potential_payout" => $betAmount[0] * $selectedPrice,
                     "status" => 'PROCESSING',
                     ]);
             }
            
-            // User::where('id', $user->id)->decrement('balance', $selectedPrice);
+            User::where('id', $user->id)->decrement('balance', $selectedPrice);
 
 
             return response()->json(['message' => 'Bet placed successfully']);
