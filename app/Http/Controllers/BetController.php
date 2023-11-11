@@ -19,6 +19,10 @@ class BetController extends Controller
 
             $selectedPrice = $request->input("selected_price");
 
+            if ($user->balance < $selectedPrice) {
+                return response()->json(['message' => 'Insufficient balance to place the bet'], 400);
+            }
+
             $isComboBet = $request->has('is_combo_bet') && $request->input('is_combo_bet');
 
             if ($isComboBet) {

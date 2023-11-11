@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SportController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\BetController;
+use App\Http\Controllers\BetHistoryController;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VerificationController;
@@ -38,6 +39,7 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::get('history', [TransactionController::class, 'userGetHistory']);
     Route::post('placebet',  [BetController::class, 'placeBet']);
     Route::post('settlement',  [Settlement::class, 'checkBetOutcome']);
+    Route::get('/bet-history', [BetHistoryController::class, 'index']);
 
 
 });
