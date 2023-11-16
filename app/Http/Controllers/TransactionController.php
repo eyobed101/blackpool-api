@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class TransactionController extends Controller
 {
@@ -39,6 +40,7 @@ class TransactionController extends Controller
                 $transaction_image = $request->file('transaction_image'); // lets get the uploaded file
                 $filename = strval($time_now) . '-' . $transaction_image->getClientOriginalName();
                 $transaction = Transaction::create([
+                    "id" => Str::random(32),
                     'amount' => $request->amount,
                     'crypto_type' => $request->crypto_type,
                     'type' => "DEPOSIT",
@@ -49,8 +51,9 @@ class TransactionController extends Controller
                 return response()->json(["transaction" => $transaction], 200);
 
            } catch(Exception $e) {
+                Log::info($e->getMessage());
             return response()->json(["error" => "something went wrong please try again"], 500);
-              Log::info($e->getMessage());
+             
            }
     }
     public function adminGetPendingDeposits(Request $request)

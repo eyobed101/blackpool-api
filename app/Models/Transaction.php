@@ -9,8 +9,9 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'bet_id', 'type', 'amount', 'crypto_type', 'status', 'image','wallet_address'];
-
+    protected $fillable = ['id', 'user_id', 'bet_id', 'type', 'amount', 'crypto_type', 'status', 'image','wallet_address'];
+    
+public $incrementing = false;
     public function user()
     {
         return $this->belongsTo(User::class);
