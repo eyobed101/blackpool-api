@@ -11,8 +11,8 @@ use App\Http\Controllers\BetHistoryController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\TransactionController;
-
-
+use App\Http\Controllers\AgentController;
+use Illuminate\Database\Events\TransactionCommitted;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::post('login', 'API\AuthController@login');
 Route::post('register', [AuthController::class, 'create']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('/{admin_id}/user/register', [AuthController::class, 'createUserWithAdminId']);
 Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::get('details', [AuthController::class, 'details']);
     Route::post('verifications', [VerificationController::class, 'uploadVerification']);
@@ -41,9 +42,8 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::post('settlement',  [Settlement::class, 'checkBetOutcome']);
     Route::get('/bet-history', [BetHistoryController::class, 'index']);
 
-
 });
-Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function () {
+Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.response']], function () {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
     Route::post('admin/verifications/post', [VerificationController::class, 'adminActivateUser']);
     Route::post('admin/verifications/disable', [VerificationController::class, 'adminDisableUser']);
@@ -55,11 +55,17 @@ Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], funct
     Route::post("admin/withdrawals/disapprove", [TransactionController::class, 'adminDisapproveWithdrawalRequest']);
     Route::get('admin/transactions/get', [TransactionController::class, 'admnGetAllTransactions']);
     Route::get("admin/users/get", [AuthController::class, 'GetAllUsers']);
+    Route::post("admin/agent/create", [AuthController::class, 'superAdminCreateAdmin']);
+    Route::get("admin/agent/list", [AuthController::class, 'showAllAdmins']);
+    Route::get("admin/deposit/all/get", [TransactionController::class, 'adminGetAllDeposits']);
+    Route::get("admin/withdrawals/all/get", [TransactionController::class, 'adminGetAllWithdrawals']);
 });
-
-
+Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function(){
+     // lets create the routes of the admin
+     Route::get("agent/users/list", [AgentController::class, 'GetAllReferedusers']);
+     Route::get("agent/users/deposit", [AgentController::class, 'GetUsersDeposit']);
+});
 Route::get('/games', [SportController::class, 'getGames']);
-
 Route::get('/scores', [ScoreController::class, 'getScores']);
 
 

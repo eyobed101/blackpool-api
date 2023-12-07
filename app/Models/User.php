@@ -29,6 +29,7 @@ class User extends Authenticatable
         'verification_status',
         'balance',
         'role',
+        'admin_id'
     ];
 
     /**
@@ -49,9 +50,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-
-
     public function verification()
     {
         return $this->hasOne(Verification::class);
@@ -71,7 +69,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'user_id', 'id');
     }
-
+    public function admin()
+    {
+         return $this->belongsTo(self::class, 'admin_id');
+    }
 
 }
 

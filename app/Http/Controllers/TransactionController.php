@@ -137,7 +137,7 @@ class TransactionController extends Controller
                  return response()->json(['error' => 'Insufficient amount ' . strval($user->balance) . ' < ' . strval($request->amount)]);
             }
             $new_withdraw_request = Transaction::create([
-               "id" => Str::random(32),
+                   "id" => Str::random(32),
                    'wallet_address' => $request->wallet_address,
                    'amount' => $request->amount,
                    'crypto_type' => $request->crypto_type,
