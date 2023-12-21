@@ -70,6 +70,69 @@ class AuthController extends Controller
             return response($response, 422);
         }
     }
+    public function superAdminCreateAdmin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required',
+            'phone_number' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()], 401);
+        }
+        $input = $request->all();
+        $input['password'] = bcrypt($input['password']);
+        $input['role'] = 'ADMIN';
+        $user = User::create($input);
+        $success['admin'] =  $user;
+        return response()->json(['success'=>$success], 200);
+    }
+    public function createUserWithAdminId(Request $request)
+    {
+        $admin_id = $request->route('admin_id');
+        try {
+            $admin = User::findOrFail($admin_id);
+            $validator = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required|email',
+                'password' => 'required',
+                'phone_number' => 'required'
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['error'=>$validator->errors()], 401);
+            }
+            if($admin->role != "ADMIN")
+            {
+                  return response()->json(['error' => 'user not registered agent'], 500);
+            }
+            $input = $request->all();
+            $input['password'] = bcrypt($input['password']);
+            $input['admin_id'] = $admin->id;
+            $user = User::create($input);
+            $success['admin'] =  $user;
+            return response()->json(['success'=>$success], 200);
+        } catch(Exception $e) {
+            Log::info($e->getMessage());
+           return response()->json(['error' => 'Something went wrong']);
+        }
+    }
+    public function showAllAdmins()
+    {
+          // we are going to use this routes to show all the available agents
+          try {
+             $admin_list = User::where('role', '=', 'ADMIN')->get();
+             foreach($admin_list as $agent) {
+                // lets get all the users with the agent id in the registration
+                $customers = User::where('admin_id', '=', $agent->id)->with('transaction')->get();
+                $agent["customer"] = $customers;
+           }
+             return response()->json(['admins'  => $admin_list]);
+          } catch(Exception $e) {
+              return response()->json(['error' => 'something went wrong']);
+          }
+
+    }
     public function details()
     {
         $user = Auth::user();
@@ -79,13 +142,30 @@ class AuthController extends Controller
     public function GetAllUsers()
     {
           try {
-             $users = User::with('transaction')->where('role', '=', 'USER')->get();
-             return response()->json($users, 200);
+             $users = User::with('transaction')->where('role', '=', 'USER')->where(function ($query){
+                        return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
+             })->get();
+             $pending_users = User::where('verification_status', '=', 'ONBOARDING')->where('role', '=', 'USER')->get();
+             $verified_users = User::where('verification_status', '=', 'VERIFIED')->where('role', '=', 'USER')->get();
+             $disabled_users = User::where('verification_status', '=', 'DISABLED')->where('role', '=', 'USER')->get();
+             return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" => $users]);
           } catch (Exception $e)
           {
                Log::error($e->getMessage());
                return response()->json(["error" => "something went wrong"]);
           }
+    }
+    // lets get the latest admins by sorting of 
+    public function GetLatestAdmins()
+    {
+         try {
+             $agents = User::where('role', '=', 'ADMIN')->orderBy('created_at', 'desc')->with('admin')->take(5)->get();
+             return response()->json(['data' => $agents]);
+             
+         } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(["error" => "something went wrong"]);
+         }
     }
     /**
      * Store a newly created resource in storage.
