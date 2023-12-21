@@ -12,6 +12,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\WalletController;
 use Illuminate\Database\Events\TransactionCommitted;
 
 /*
@@ -59,13 +60,19 @@ Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.respon
     Route::get("admin/agent/list", [AuthController::class, 'showAllAdmins']);
     Route::get("admin/deposit/all/get", [TransactionController::class, 'adminGetAllDeposits']);
     Route::get("admin/withdrawals/all/get", [TransactionController::class, 'adminGetAllWithdrawals']);
+    Route::get("admin/agents/get/latest", [AuthController::class, 'GetLatestAdmins']);
+    Route::post("admin/wallets/create", [WalletController::class, 'createWalletAddress']);
+    Route::get("admin/wallets/get", [WalletController::class, 'getWalletAddresses']);
+    Route::post("admin/wallets/setDefault", [WalletController::class, 'setDefaultWalletAddress']);
 });
 Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function(){
      // lets create the routes of the admin
      Route::get("agent/users/list", [AgentController::class, 'GetAllReferedusers']);
      Route::get("agent/users/deposit", [AgentController::class, 'GetUsersDeposit']);
+     Route::get("agent/users/withdraw", [AgentController::class, 'GetUsersWithdrawal']);
 });
 Route::get('/games', [SportController::class, 'getGames']);
+Route::get("/wallets/getDefault", [WalletController::class, 'getDefaultWalletAddress']);
 Route::get('/scores', [ScoreController::class, 'getScores']);
 
 
