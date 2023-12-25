@@ -137,7 +137,7 @@ class TransactionController extends Controller
                  return response()->json(['error' => 'Insufficient amount ' . strval($user->balance) . ' < ' . strval($request->amount)]);
             }
             $new_withdraw_request = Transaction::create([
-               "id" => Str::random(32),
+                   "id" => Str::random(32),
                    'wallet_address' => $request->wallet_address,
                    'amount' => $request->amount,
                    'crypto_type' => $request->crypto_type,
@@ -145,6 +145,7 @@ class TransactionController extends Controller
                    'user_id' => $user->id,
                    'status' => 'PENDING'
             ]);
+            
             // lets return the response
             return response()->json($new_withdraw_request, 200);
         } catch(Exception $e) {
@@ -155,7 +156,7 @@ class TransactionController extends Controller
     public function adminGetWithdrawalRequests()
     {
          try {
-             $withdraw_requests = Transaction::where('status', '=', 'PENDING')->where('type', '=', 'WITHDRAW')->get();
+             $withdraw_requests = Transaction::where('status', '=', 'PENDING')->where('type', '=', 'WITHDRAW')->with('user')->get();
              // lets return the requests
              return response()->json(['transactions' => $withdraw_requests], 200);
 
@@ -250,5 +251,34 @@ class TransactionController extends Controller
         }
     }
 
-
+   public function adminGetAllDeposits() {
+     try {
+          $deposits = Transaction::where(function ($query) {
+              return $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+          })->where('type', '=', 'DEPOSIT')->orderBy('created_at', 'desc')->with('user')->get();
+          // lets get the deposit stats
+          $success_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'SUCCESS')->get();
+          $failed_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'FAILED')->get();
+          $pending_deposit =  Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'PENDING')->get();
+          return response()->json(["success"=>count($success_deposit),  "pending"=>count($pending_deposit), "failed" => count($failed_deposit),  "deposits" => $deposits], 200);
+      } catch(Exception $e) {
+        Log::error($e->getMessage());
+        return response()->json(["error" => "something went wrog please try again"]);
+      }
+   }
+   
+   public function adminGetAllWithdrawals() {
+     try {
+          $withdrawals = Transaction::where('type', '=', 'WITHDRAW')->where(function ($query) {
+               $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+          })->with('user')->get();
+          $success_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'SUCCESS')->get();
+          $failed_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'FAILED')->get();
+          $pending_withdrawal =  Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'PENDING')->get();
+          return response()->json(["success"=>count($success_withdrawal),  "pending"=>count($pending_withdrawal), "failed" => count($failed_withdrawal), "withdrawals" => $withdrawals], 200);
+      } catch(Exception $e) {
+        Log::error($e->getMessage());
+        return response()->json(["error" => "something went wrog please try again"]);
+      }
+   }
 }
