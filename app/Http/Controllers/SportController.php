@@ -39,7 +39,7 @@ class SportController extends Controller
 
             $ncaabasketballData = Cache::remember(
                 'ncaabasketball_data',
-                432000,
+                120,
                 function () {
                     $response = $this->client->get('/v4/sports/basketball_ncaab/odds', [
                         'query' => [
@@ -52,24 +52,11 @@ class SportController extends Controller
                     ]);
 
                     $contents = $response->getBody()->getContents();
-
-                    $headers = $response->getHeaders();
-
-                    $jsonHeaders = [];
-
-                    foreach ($headers as $name => $values) {
-                        $jsonHeaders[$name] = $values[0];
-                    }
-
-                    $jsonHeaders = json_encode($jsonHeaders);
-
-                    echo $jsonHeaders;
-
-
+                
                     return json_decode($contents, true);
                 }
             );
-            $nbaData = Cache::remember('nba_data', 432000, function () {
+            $nbaData = Cache::remember('nba_data', 120, function () {
                 $response = $this->client->get('/v4/sports/basketball_nba/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -96,20 +83,20 @@ class SportController extends Controller
                 // echo  $current_time . ' vs ' . Carbon::parse($game['commence_time']) ;
                 return Carbon::parse($game['commence_time']) <= $current_time;
             });
-            echo 'filtered data from Ncaaa Live' . count($filteredNcaabasketballData);
+            // echo 'filtered data from Ncaaa Live' . count($filteredNcaabasketballData);
 
 
             $nbaDataArray = $nbaData;
             $filteredNbaData = array_filter($nbaDataArray, function ($game) {
                 $current_time = Carbon::now();
-                echo $current_time;
+                // echo $current_time;
 
                 return Carbon::parse($game['commence_time']) <= $current_time;
             });
 
 
 
-            echo 'filtered data from Nba Live' . count($filteredNbaData);
+            // echo 'filtered data from Nba Live' . count($filteredNbaData);
 
 
             $ncaabasketballLiveGameIds = array_column($filteredNcaabasketballData, 'id');
@@ -118,7 +105,7 @@ class SportController extends Controller
 
                 $ncaabasketballLiveGameCacheTime = Cache::get('ncaabasketball_live_game_cache_time_' . $eventId);
 
-                if (time() - $ncaabasketballLiveGameCacheTime >= 18000) {
+                if (time() - $ncaabasketballLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -134,7 +121,7 @@ class SportController extends Controller
 
                         $updatedNcaabasketballOdds = json_decode($ncaabasketballResponse->getBody()->getContents(), true);
 
-                        Cache::put('ncaabasketball_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('ncaabasketball_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredNcaabasketballData as $game) {
@@ -181,10 +168,10 @@ class SportController extends Controller
 
                 $nbaLiveGameCacheTime = Cache::get('nba_live_game_cache_time_' . $eventId);
 
-                if (time() - $nbaLiveGameCacheTime >= 18000) {
+                if (time() - $nbaLiveGameCacheTime >= 40) {
                     try {
 
-                        echo "Expired Live Game detected in NBA";
+                        // echo "Expired Live Game detected in NBA";
                         $nbaResponse = $this->client->get("/v4/sports/basketball_nba/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
@@ -197,7 +184,7 @@ class SportController extends Controller
 
                         $updatedNbaOdds = json_decode($nbaResponse->getBody()->getContents(), true);
 
-                        Cache::put('nba_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('nba_live_game_cache_time_' . $eventId, time(), 40);
 
                         foreach ($filteredNbaData as &$game) {
                             if ($game['id'] == $eventId) {
@@ -257,7 +244,7 @@ class SportController extends Controller
         } elseif ($sport == 'football') {
 
             $ncaafootballData =
-                Cache::remember('ncaaf_americanfootball_data', 432000, function () {
+                Cache::remember('ncaaf_americanfootball_data', 120, function () {
                     $response = $this->client->get('/v4/sports/americanfootball_ncaaf/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -272,7 +259,7 @@ class SportController extends Controller
                     return json_decode($contents, true);
                 });
 
-            $nflfootballData = Cache::remember('nfl_americanfootball_data', 432000, function () {
+            $nflfootballData = Cache::remember('nfl_americanfootball_data', 120, function () {
                 $response = $this->client->get('/v4/sports/americanfootball_nfl/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -288,7 +275,7 @@ class SportController extends Controller
                 return json_decode($contents, true);
             });
 
-            $cflfootballData = Cache::remember('cfl_americanfootball_data', 432000, function () {
+            $cflfootballData = Cache::remember('cfl_americanfootball_data', 120, function () {
                 $response = $this->client->get('/v4/sports/americanfootball_cfl/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -333,7 +320,7 @@ class SportController extends Controller
 
                 $ncaafootballLiveGameCacheTime = Cache::get('ncaafootball_live_game_cache_time_' . $eventId);
 
-                if (time() - $ncaafootballLiveGameCacheTime >= 18000) {
+                if (time() - $ncaafootballLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -349,7 +336,7 @@ class SportController extends Controller
 
                         $updatedNcaafootballOdds = json_decode($ncaafootballResponse->getBody()->getContents(), true);
 
-                        Cache::put('ncaafootball_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('ncaafootball_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredNcaafootballData as $game) {
@@ -394,7 +381,7 @@ class SportController extends Controller
 
                 $nflfootballLiveGameCacheTime = Cache::get('nflfootball_live_game_cache_time_' . $eventId);
 
-                if (time() - $nflfootballLiveGameCacheTime >= 18000) {
+                if (time() - $nflfootballLiveGameCacheTime >= 40) {
 
 
                     try {
@@ -410,7 +397,7 @@ class SportController extends Controller
 
                         $updatedNflfootballOdds = json_decode($nflfootballResponse->getBody()->getContents(), true);
 
-                        Cache::put('nflfootball_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('nflfootball_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredNflfootballData as $game) {
@@ -454,7 +441,7 @@ class SportController extends Controller
 
                 $cflfootballLiveGameCacheTime = Cache::get('cflfootball_live_game_cache_time_' . $eventId);
 
-                if (time() - $cflfootballLiveGameCacheTime >= 18000) {
+                if (time() - $cflfootballLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -470,7 +457,7 @@ class SportController extends Controller
 
                         $updatedCflfootballOdds = json_decode($cflfootballResponse->getBody()->getContents(), true);
 
-                        Cache::put('cflfootball_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('cflfootball_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredCflfootballData as $game) {
@@ -532,11 +519,11 @@ class SportController extends Controller
         } elseif ($sport == 'upcoming') {
 
             $upcomingData =
-                Cache::remember('upcoming_data', 432000, function () {
+                Cache::remember('upcoming_data', 120, function () {
                     $response = $this->client->get('/v4/sports/upcoming/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h,spreads,totals',
+                            'markets' => 'h2h',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -561,7 +548,7 @@ class SportController extends Controller
 
                 $upcomingLiveGameCacheTime = Cache::get('upcoming_live_game_cache_time_' . $eventId);
 
-                if (time() - $upcomingLiveGameCacheTime >= 18000) {
+                if (time() - $upcomingLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -579,7 +566,7 @@ class SportController extends Controller
 
 
 
-                        Cache::put('upcoming_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('upcoming_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredUpcomingData as $game) {
@@ -640,11 +627,11 @@ class SportController extends Controller
 
 
             $iplcricketData =
-                Cache::remember('ipl_cricket_data', 432000, function () {
+                Cache::remember('ipl_cricket_data', 120, function () {
                     $response = $this->client->get('/v4/sports/cricket_ipl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h,spreads,totals',
+                            'markets' => 'h2h',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -668,7 +655,7 @@ class SportController extends Controller
 
                 $iplcricketLiveGameCacheTime = Cache::get('iplcricket_live_game_cache_time_' . $eventId);
 
-                if (time() - $iplcricketLiveGameCacheTime >= 18000) {
+                if (time() - $iplcricketLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -685,7 +672,7 @@ class SportController extends Controller
 
                         $updatedIplcricketOdds = json_decode($iplcricketResponse->getBody()->getContents(), true);
 
-                        Cache::put('iplcricket_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('iplcricket_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredIplcricketData as $game) {
@@ -745,7 +732,7 @@ class SportController extends Controller
 
 
             $frenchtennisData =
-                Cache::remember('tennis_atp_french_open_data', 432000, function () {
+                Cache::remember('tennis_atp_french_open_data', 120, function () {
                     $response = $this->client->get('/v4/sports/tennis_atp_french_open/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -761,7 +748,7 @@ class SportController extends Controller
                     return json_decode($contents, true);
                 });
 
-            $austennisData = Cache::remember('tennis_atp_aus_open_singles_data', 432000, function () {
+            $austennisData = Cache::remember('tennis_atp_aus_open_singles_data', 120, function () {
                 $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -790,7 +777,7 @@ class SportController extends Controller
 
                 $frenchtennisLiveGameCacheTime = Cache::get('frenchtennis_live_game_cache_time_' . $eventId);
 
-                if (time() - $frenchtennisLiveGameCacheTime >= 18000) {
+                if (time() - $frenchtennisLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -806,7 +793,7 @@ class SportController extends Controller
 
                         $updatedFrenchtennisOdds = json_decode($frenchtennisResponse->getBody()->getContents(), true);
 
-                        Cache::put('frenchtennis_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('frenchtennis_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredFrenchtennisData as $game) {
@@ -860,7 +847,7 @@ class SportController extends Controller
 
                 $austennisLiveGameCacheTime = Cache::get('austennis_live_game_cache_time_' . $eventId);
 
-                if (time() - $austennisLiveGameCacheTime >= 18000) {
+                if (time() - $austennisLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -876,7 +863,7 @@ class SportController extends Controller
 
                         $updatedAustennisOdds = json_decode($austennisResponse->getBody()->getContents(), true);
 
-                        Cache::put('austennis_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('austennis_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredAustennisData as $game) {
@@ -935,11 +922,11 @@ class SportController extends Controller
 
 
             $pgagolfData =
-                Cache::remember('golf_pga_championship_winner_data', 432000, function () {
+                Cache::remember('golf_pga_championship_winner_data', 120, function () {
                     $response = $this->client->get('/v4/sports/golf_pga_championship_winner/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h,spreads,totals',
+                            'markets' => 'h2h',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -963,7 +950,7 @@ class SportController extends Controller
 
                 $pgagolfLiveGameCacheTime = Cache::get('pgagolf_live_game_cache_time_' . $eventId);
 
-                if (time() - $pgagolfLiveGameCacheTime >= 18000) {
+                if (time() - $pgagolfLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -979,7 +966,7 @@ class SportController extends Controller
 
                         $updatedPgagolfOdds = json_decode($pgagolfResponse->getBody()->getContents(), true);
 
-                        Cache::put('pgagolf_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('pgagolf_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredPgagolfData as $game) {
@@ -1039,7 +1026,7 @@ class SportController extends Controller
         } elseif ($sport == 'baseball') {
 
             $mlbbaseballData =
-                Cache::remember('baseball_mlb_data', 432000, function () {
+                Cache::remember('baseball_mlb_data', 120, function () {
                     $response = $this->client->get('/v4/sports/baseball_mlb/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -1068,7 +1055,7 @@ class SportController extends Controller
 
                 $mlbbaseballLiveGameCacheTime = Cache::get('mlbbaseball_live_game_cache_time_' . $eventId);
 
-                if (time() - $mlbbaseballLiveGameCacheTime >= 18000) {
+                if (time() - $mlbbaseballLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1084,7 +1071,7 @@ class SportController extends Controller
 
                         $updatedMlbbaseballOdds = json_decode($mlbbaseballResponse->getBody()->getContents(), true);
 
-                        Cache::put('mlbbaseball_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('mlbbaseball_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredMlbbaseballData as $game) {
@@ -1147,7 +1134,7 @@ class SportController extends Controller
 
 
             $eplsoccerData =
-                Cache::remember('soccer_epl_data', 432000, function () {
+                Cache::remember('soccer_epl_data', 120, function () {
                     $response = $this->client->get('/v4/sports/soccer_epl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
@@ -1175,7 +1162,7 @@ class SportController extends Controller
 
                 $eplsoccerLiveGameCacheTime = Cache::get('eplsoccer_live_game_cache_time_' . $eventId);
 
-                if (time() - $eplsoccerLiveGameCacheTime >= 18000) {
+                if (time() - $eplsoccerLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1191,7 +1178,7 @@ class SportController extends Controller
 
                         $updatedEplsoccerOdds = json_decode($eplsoccerResponse->getBody()->getContents(), true);
 
-                        Cache::put('eplsoccer_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('eplsoccer_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredEplsoccerData as $game) {
@@ -1234,7 +1221,7 @@ class SportController extends Controller
                 }
             }
 
-            $eflcupData = Cache::remember('soccer_england_efl_cup_data', 432000, function () {
+            $eflcupData = Cache::remember('soccer_england_efl_cup_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_england_efl_cup/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1264,7 +1251,7 @@ class SportController extends Controller
 
                 $eflcupLiveGameCacheTime = Cache::get('eflcup_live_game_cache_time_' . $eventId);
 
-                if (time() - $eflcupLiveGameCacheTime >= 18000) {
+                if (time() - $eflcupLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1280,7 +1267,7 @@ class SportController extends Controller
 
                         $updatedEflcupOdds = json_decode($eflcupResponse->getBody()->getContents(), true);
 
-                        Cache::put('eflcup_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('eflcup_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredEflcupData as $game) {
@@ -1317,12 +1304,12 @@ class SportController extends Controller
 
                         $currentTime = Carbon::now();
                         $remainingTime = $currentTime->diffInSeconds($expirationTime);
-                        Cache::put($cacheKey, $uefaData, $remainingTime);
+                        Cache::put($cacheKey, $eflcupData, $remainingTime);
                     }
                 }
             }
 
-            $uefaData = Cache::remember('soccer_uefa_champs_league_data', 432000, function () {
+            $uefaData = Cache::remember('soccer_uefa_champs_league_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_uefa_champs_league/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1351,7 +1338,7 @@ class SportController extends Controller
 
                 $uefaLiveGameCacheTime = Cache::get('uefa_live_game_cache_time_' . $eventId);
 
-                if (time() - $uefaLiveGameCacheTime >= 18000) {
+                if (time() - $uefaLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1367,7 +1354,7 @@ class SportController extends Controller
 
                         $updatedUefaOdds = json_decode($uefaResponse->getBody()->getContents(), true);
 
-                        Cache::put('uefa_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('uefa_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredUefaData as $game) {
@@ -1409,7 +1396,7 @@ class SportController extends Controller
                 }
             }
 
-            $champData = Cache::remember('soccer_efl_champ_data', 432000, function () {
+            $champData = Cache::remember('soccer_efl_champ_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_efl_champ/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1438,7 +1425,7 @@ class SportController extends Controller
 
                 $champLiveGameCacheTime = Cache::get('champ_live_game_cache_time_' . $eventId);
 
-                if (time() - $champLiveGameCacheTime >= 18000) {
+                if (time() - $champLiveGameCacheTime >= 40) {
 
 
                     try {
@@ -1454,7 +1441,7 @@ class SportController extends Controller
 
                         $updatedChampOdds = json_decode($champResponse->getBody()->getContents(), true);
 
-                        Cache::put('champ_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('champ_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredChampData as $game) {
@@ -1497,7 +1484,7 @@ class SportController extends Controller
                 }
 
             }
-            $bundesligaData = Cache::remember('soccer_germany_bundesliga_data', 432000, function () {
+            $bundesligaData = Cache::remember('soccer_germany_bundesliga_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_germany_bundesliga/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1525,7 +1512,7 @@ class SportController extends Controller
 
                 $bundesligaLiveGameCacheTime = Cache::get('bundesliga_live_game_cache_time_' . $eventId);
 
-                if (time() - $bundesligaLiveGameCacheTime >= 18000) {
+                if (time() - $bundesligaLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1541,7 +1528,7 @@ class SportController extends Controller
 
                         $updatedBundesligaOdds = json_decode($bundesligaResponse->getBody()->getContents(), true);
 
-                        Cache::put('bundesliga_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('bundesliga_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredBundesligaData as $game) {
@@ -1583,7 +1570,7 @@ class SportController extends Controller
                 }
             }
 
-            $laligaData = Cache::remember('soccer_spain_la_liga_data', 432000, function () {
+            $laligaData = Cache::remember('soccer_spain_la_liga_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_spain_la_liga/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1613,7 +1600,7 @@ class SportController extends Controller
 
                 $laligaLiveGameCacheTime = Cache::get('laliga_live_game_cache_time_' . $eventId);
 
-                if (time() - $laligaLiveGameCacheTime >= 18000) {
+                if (time() - $laligaLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1629,7 +1616,7 @@ class SportController extends Controller
 
                         $updatedLaligaOdds = json_decode($laligaResponse->getBody()->getContents(), true);
 
-                        Cache::put('laliga_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('laliga_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredLaligaData as $game) {
@@ -1671,7 +1658,7 @@ class SportController extends Controller
                 }
             }
 
-            $facupData = Cache::remember('soccer_fa_cup_data', 432000, function () {
+            $facupData = Cache::remember('soccer_fa_cup_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_fa_cup/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1702,7 +1689,7 @@ class SportController extends Controller
 
                 $facupLiveGameCacheTime = Cache::get('facup_live_game_cache_time_' . $eventId);
 
-                if (time() - $facupLiveGameCacheTime >= 18000) {
+                if (time() - $facupLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1718,7 +1705,7 @@ class SportController extends Controller
 
                         $updatedFacupOdds = json_decode($facupResponse->getBody()->getContents(), true);
 
-                        Cache::put('facup_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('facup_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredFacupData as $game) {
@@ -1762,7 +1749,7 @@ class SportController extends Controller
             }
 
 
-            $campeonatoData = Cache::remember('soccer_brazil_campeonato_data', 432000, function () {
+            $campeonatoData = Cache::remember('soccer_brazil_campeonato_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_brazil_campeonato/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1791,7 +1778,7 @@ class SportController extends Controller
 
                 $campeonatoLiveGameCacheTime = Cache::get('campeonato_live_game_cache_time_' . $eventId);
 
-                if (time() - $campeonatoLiveGameCacheTime >= 18000) {
+                if (time() - $campeonatoLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1807,7 +1794,7 @@ class SportController extends Controller
 
                         $updatedCampeonatoOdds = json_decode($campeonatoResponse->getBody()->getContents(), true);
 
-                        Cache::put('campeonato_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('campeonato_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredCampeonatoData as $game) {
@@ -1849,7 +1836,7 @@ class SportController extends Controller
                 }
             }
 
-            $turkeysuperData = Cache::remember('soccer_turkey_super_league_data', 432000, function () {
+            $turkeysuperData = Cache::remember('soccer_turkey_super_league_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_turkey_super_league/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1878,7 +1865,7 @@ class SportController extends Controller
 
                 $turkeysuperLiveGameCacheTime = Cache::get('turkeysuper_live_game_cache_time_' . $eventId);
 
-                if (time() - $turkeysuperLiveGameCacheTime >= 18000) {
+                if (time() - $turkeysuperLiveGameCacheTime >= 40) {
 
 
                     try {
@@ -1894,7 +1881,7 @@ class SportController extends Controller
 
                         $updatedTurkeysuperOdds = json_decode($turkeysuperResponse->getBody()->getContents(), true);
 
-                        Cache::put('turkeysuper_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('turkeysuper_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredTurkeysuperData as $game) {
@@ -1936,7 +1923,7 @@ class SportController extends Controller
                 }
             }
 
-            $englandData = Cache::remember('soccer_england_league1_data', 432000, function () {
+            $englandData = Cache::remember('soccer_england_league1_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_england_league1/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -1965,7 +1952,7 @@ class SportController extends Controller
 
                 $englandLiveGameCacheTime = Cache::get('england_live_game_cache_time_' . $eventId);
 
-                if (time() - $englandLiveGameCacheTime >= 18000) {
+                if (time() - $englandLiveGameCacheTime >= 40) {
 
                     try {
 
@@ -1981,7 +1968,7 @@ class SportController extends Controller
 
                         $updatedEnglandOdds = json_decode($englandResponse->getBody()->getContents(), true);
 
-                        Cache::put('england_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('england_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredEnglandData as $game) {
@@ -2023,7 +2010,7 @@ class SportController extends Controller
                 }
             }
 
-            $australiaData = Cache::remember('soccer_australia_aleague_data', 432000, function () {
+            $australiaData = Cache::remember('soccer_australia_aleague_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_australia_aleague/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -2051,7 +2038,7 @@ class SportController extends Controller
 
                 $australiaLiveGameCacheTime = Cache::get('australia_live_game_cache_time_' . $eventId);
 
-                if (time() - $australiaLiveGameCacheTime >= 18000) {
+                if (time() - $australiaLiveGameCacheTime >= 40) {
 
 
                     try {
@@ -2067,7 +2054,7 @@ class SportController extends Controller
 
                         $updatedAustraliaOdds = json_decode($australiaResponse->getBody()->getContents(), true);
 
-                        Cache::put('australia_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('australia_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredAustraliaData as $game) {
@@ -2109,7 +2096,7 @@ class SportController extends Controller
                 }
             }
 
-            $chinasuperData = Cache::remember('soccer_china_superleague_data', 432000, function () {
+            $chinasuperData = Cache::remember('soccer_china_superleague_data', 120, function () {
                 $response = $this->client->get('/v4/sports/soccer_china_superleague/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
@@ -2138,7 +2125,7 @@ class SportController extends Controller
 
                 $chinasuperLiveGameCacheTime = Cache::get('chinasuper_live_game_cache_time_' . $eventId);
 
-                if (time() - $chinasuperLiveGameCacheTime >= 18000) {
+                if (time() - $chinasuperLiveGameCacheTime >= 40) {
 
 
                     try {
@@ -2154,7 +2141,7 @@ class SportController extends Controller
 
                         $updatedChinasuperOdds = json_decode($chinasuperResponse->getBody()->getContents(), true);
 
-                        Cache::put('chinasuper_live_game_cache_time_' . $eventId, time(), 18000);
+                        Cache::put('chinasuper_live_game_cache_time_' . $eventId, time(), 40);
 
 
                         foreach ($filteredChinasuperData as $game) {
@@ -2212,12 +2199,12 @@ class SportController extends Controller
             return $result;
 
         } else {
-            echo "nothing is happening";
+            // echo "nothing is happening";
         }
     }
     public function getScores()
     {
-        $scores = Cache::remember('recent_scores', 432000, function () {
+        $scores = Cache::remember('recent_scores', 120, function () {
             $response = $this->client->get('/v4/sports/scores');
 
             return json_decode($response->getBody(), true);
