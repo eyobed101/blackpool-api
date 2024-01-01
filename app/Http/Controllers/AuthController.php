@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Contracts\Mail\Mailable;
 use Exception;
+use App\Mail\SendMail;
 class AuthController extends Controller
 {
     /**
@@ -166,6 +169,30 @@ class AuthController extends Controller
             Log::error($e->getMessage());
             return response()->json(["error" => "something went wrong"]);
          }
+    }
+    public function SendOTP(Request $request)
+    {
+        $otp = rand(1000,9999);
+        Log::info("otp = ".$otp);
+        // $user = User::where('email','=',$request->email);
+        // if($user){
+        // send otp in the email
+        $mail_details = [
+            'subject' => 'Testing Application OTP',
+            'body' => 'Your OTP is : '. $otp
+        ];
+        $testMailData = [
+            'title' => 'Testing Application OTP',
+            'body' => 'Your OTP is : '. $otp
+        ];
+
+        Mail::to($request->email)->send(new SendMail($testMailData));
+       
+         return response(["status" => 200, "message" => "OTP sent successfully"]);
+        // }
+        // else{
+            // return response(["status" => 401, 'message' => 'Invalid']);
+        // }
     }
     /**
      * Store a newly created resource in storage.
