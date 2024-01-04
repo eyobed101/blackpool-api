@@ -61,8 +61,8 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
         if ($user) {
             if (Hash::check($request->password, $user->password)) {
-                $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                $response = ['token' => $token, 'username' => $user->name];
+                // $token = $user->createToken('Laravel Password Grant Client')->accessToken;
+                $response = ['username' => $user->name, 'email' => $user->email];
                 return response()->json($response, 200);
             } else {
                 $response = ["message" => "wrong username or password"];
@@ -174,25 +174,39 @@ class AuthController extends Controller
     {
         $otp = rand(1000,9999);
         Log::info("otp = ".$otp);
-        // $user = User::where('email','=',$request->email);
-        // if($user){
-        // send otp in the email
+        $user = User::where('email','=', $request->email)->update(['otp'=>$otp]);
+        if($user){
+      //  send otp in the email
         $mail_details = [
             'subject' => 'Testing Application OTP',
             'body' => 'Your OTP is : '. $otp
         ];
         $testMailData = [
-            'title' => 'Testing Application OTP',
+            'title' => 'Blackpool login OTP',
             'body' => 'Your OTP is : '. $otp
         ];
 
         Mail::to($request->email)->send(new SendMail($testMailData));
        
          return response(["status" => 200, "message" => "OTP sent successfully"]);
-        // }
-        // else{
-            // return response(["status" => 401, 'message' => 'Invalid']);
-        // }
+        }
+        else{
+            return response(["status" => 401, 'message' => 'Invalid']);
+        }
+    }
+    public function verifyOtp(Request $request){
+    
+        $user  = User::where([['email','=',$request->email],['otp','=',$request->otp]])->first();
+        if($user){
+            auth()->login($user, true);
+            User::where('email','=',$request->email)->update(['otp' => null]);
+            $accessToken = auth()->user()->createToken('authToken')->accessToken;
+
+            return response(["status" => 200, "message" => "Success", 'user' => auth()->user(), 'access_token' => $accessToken]);
+        }
+        else{
+            return response(["status" => 401, 'message' => 'Invalid']);
+        }
     }
     /**
      * Store a newly created resource in storage.
