@@ -32,6 +32,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::post('login', 'API\AuthController@login');
 Route::post('register', [AuthController::class, 'create']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('send-otp', [AuthController::class, 'SendOTP']);
+Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/{admin_id}/user/register', [AuthController::class, 'createUserWithAdminId']);
 Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::get('details', [AuthController::class, 'details']);

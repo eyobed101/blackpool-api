@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Contracts\Mail\Mailable;
+
 
 use Exception;
-
+use App\Mail\SendMail;
 class AuthController extends Controller
 {
     /**
@@ -124,28 +126,18 @@ class AuthController extends Controller
             return response(['errors' => $validator->errors()->all()], 422);
         }
         $user = User::where('email', $request->email)->first();
-        // echo $user;
-
-        try {
-
-            if ($user) {
-                if (Hash::check($request->password, $user->password)) {
-                    $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                    $response = ['token' => $token, 'username' => $user->name];
-                    return response()->json($response, 200);
-                } else {
-                    $response = ["message" => "wrong username or password"];
-                    return response()->json($response, 404);
-                }
+        if ($user) {
+            if (Hash::check($request->password, $user->password)) {
+                // $token = $user->createToken('Laravel Password Grant Client')->accessToken;
+                $response = ['username' => $user->name, 'email' => $user->email];
+                return response()->json($response, 200);
             } else {
-                $response = ["message" => 'User does not exist'];
-                return response($response, 404);
+                $response = ["message" => "wrong username or password"];
+                return response()->json($response, 422);
             }
-        } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            Log::error('Login Exception: ' . $e->getMessage());
-            // Return an appropriate error response
-            return response()->json(['message' =>  $e->getMessage()], 500);
+        } else {
+            $response = ["message" =>'User does not exist'];
+            return response($response, 422);
         }
     }
     public function superAdminCreateAdmin(Request $request)
@@ -241,6 +233,44 @@ class AuthController extends Controller
         } catch (Exception $e) {
             Log::error($e->getMessage());
             return response()->json(["error" => "something went wrong"]);
+         }
+    }
+    public function SendOTP(Request $request)
+    {
+        $otp = rand(1000,9999);
+        Log::info("otp = ".$otp);
+        $user = User::where('email','=', $request->email)->update(['otp'=>$otp]);
+        if($user){
+      //  send otp in the email
+        $mail_details = [
+            'subject' => 'Testing Application OTP',
+            'body' => 'Your OTP is : '. $otp
+        ];
+        $testMailData = [
+            'title' => 'Blackpool login OTP',
+            'body' => 'Your OTP is : '. $otp
+        ];
+
+        Mail::to($request->email)->send(new SendMail($testMailData));
+       
+         return response(["status" => 200, "message" => "OTP sent successfully"]);
+        }
+        else{
+            return response(["status" => 401, 'message' => 'Invalid']);
+        }
+    }
+    public function verifyOtp(Request $request){
+    
+        $user  = User::where([['email','=',$request->email],['otp','=',$request->otp]])->first();
+        if($user){
+            auth()->login($user, true);
+            User::where('email','=',$request->email)->update(['otp' => null]);
+            $accessToken = auth()->user()->createToken('authToken')->accessToken;
+
+            return response(["status" => 200, "message" => "Success", 'user' => auth()->user(), 'access_token' => $accessToken]);
+        }
+        else{
+            return response(["status" => 401, 'message' => 'Invalid']);
         }
     }
     /**
