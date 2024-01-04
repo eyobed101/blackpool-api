@@ -44,7 +44,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/basketball_ncaab/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -60,7 +60,7 @@ class SportController extends Controller
                 $response = $this->client->get('/v4/sports/basketball_nba/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
-                        'markets' => 'h2h',
+                        'markets' => 'h2h,totals',
                         'regions' => 'us',
                         'oddsFormat' => 'decimal',
                         'bookmakers' => 'draftkings',
@@ -112,7 +112,7 @@ class SportController extends Controller
                         $ncaabasketballResponse = $this->client->get("/v4/sports/basketball_ncaab/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -175,7 +175,7 @@ class SportController extends Controller
                         $nbaResponse = $this->client->get("/v4/sports/basketball_nba/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -327,7 +327,7 @@ class SportController extends Controller
                         $ncaafootballResponse = $this->client->get("/v4/sports/americanfootball_ncaaf/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -388,7 +388,7 @@ class SportController extends Controller
                         $nflfootballResponse = $this->client->get("/v4/sports/americanfootball_nfl/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -448,7 +448,7 @@ class SportController extends Controller
                         $cflfootballResponse = $this->client->get("/v4/sports/americanfootball_cfl/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -523,7 +523,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/upcoming/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -555,7 +555,7 @@ class SportController extends Controller
                         $upcomingResponse = $this->client->get("/v4/sports/upcoming/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -631,7 +631,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/cricket_ipl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -663,7 +663,7 @@ class SportController extends Controller
                         $iplcricketResponse = $this->client->get("/v4/sports/cricket_ipl/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -714,7 +714,96 @@ class SportController extends Controller
             }
 
 
-            $responseArray = Utils::all([$iplcricketData])->wait();
+            $bigbashData =
+                Cache::remember('big_bash_data', 120, function () {
+                    $response = $this->client->get('/v4/sports/cricket_big_bash/odds', [
+                        'query' => [
+                            'apiKey' => env('API_KEY'),
+                            'markets' => 'h2h,totals',
+                            'regions' => 'us',
+                            'oddsFormat' => 'decimal',
+                            'bookmakers' => 'unibet_us',
+                        ]
+                    ]);
+
+                    $contents = $response->getBody()->getContents();
+                    return json_decode($contents, true);
+                });
+
+            $bigBashDataArray = $bigbashData;
+            $filteredBigbashData = array_filter($bigBashDataArray, function ($game) {
+                $current_time = Carbon::now();
+                return Carbon::parse($game['commence_time']) <= $current_time;
+            });
+
+            $bigbashLiveGameIds = array_column($filteredBigbashData, 'id');
+
+
+            foreach ($bigbashLiveGameIds as $eventId) {
+
+                $bigbashLiveGameCacheTime = Cache::get('bigbash_live_game_cache_time_' . $eventId);
+
+                if (time() - $bigbashLiveGameCacheTime >= 40) {
+
+                    try {
+
+
+                        $bigbashResponse = $this->client->get("/v4/sports/cricket_big_bash/events/{$eventId}/odds", [
+                            'query' => [
+                                'apiKey' => env('API_KEY'),
+                                'markets' => 'h2h',
+                                'regions' => 'us',
+                                'oddsFormat' => 'decimal',
+                                'bookmakers' => 'lowvig',
+                            ]
+                        ]);
+
+                        $updatedBigbashOdds = json_decode($bigbashResponse->getBody()->getContents(), true);
+
+                        Cache::put('bigbash_live_game_cache_time_' . $eventId, time(), 40);
+
+
+                        foreach ($filteredBigbashData as $game) {
+                            if ($game['id'] == $eventId) {
+                                $game = $updatedBigbashOdds;
+                                break;
+                            }
+                        }
+                        $bigbashData = array_merge($bigBashDataArray, $filteredBigbashData);
+
+                        $cacheKey = 'big_bash_data';
+
+                        $expirationTime = Cache::get($cacheKey . ':expires_at');
+
+                        $currentTime = Carbon::now();
+                        $remainingTime = $currentTime->diffInSeconds($expirationTime);
+                        Cache::put($cacheKey, $bigbashData, $remainingTime);
+                    } catch (\Exception $e) {
+                        // Delete cache and corresponding data from the main array
+                        Cache::forget('bigbash_live_game_cache_time_' . $eventId);
+                        
+                        foreach ($bigBashDataArray as $key => $game) {
+                            if ($game['id'] == $eventId) {
+                                unset($bigBashDataArray[$key]);
+                                break;
+                            }
+                        }
+                        // Merge the updated array after removing the game data
+                        $bigbashData = array_values($bigBashDataArray);
+
+                        $cacheKey = 'big_bash_data';
+
+                        $expirationTime = Cache::get($cacheKey . ':expires_at');
+
+                        $currentTime = Carbon::now();
+                        $remainingTime = $currentTime->diffInSeconds($expirationTime);
+                        Cache::put($cacheKey, $bigbashData, $remainingTime);
+                    }
+                }
+            }
+
+
+            $responseArray = Utils::all([$iplcricketData, $bigbashData])->wait();
 
             $result = [];
 
@@ -736,7 +825,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/tennis_atp_french_open/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -752,7 +841,7 @@ class SportController extends Controller
                 $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
-                        'markets' => 'h2h',
+                        'markets' => 'h2h,totals',
                         'regions' => 'us',
                         'oddsFormat' => 'decimal',
                         'bookmakers' => 'fanduel',
@@ -784,7 +873,7 @@ class SportController extends Controller
                         $frenchtennisResponse = $this->client->get("/v4/sports/tennis_atp_french_open/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -854,7 +943,7 @@ class SportController extends Controller
                         $austennisResponse = $this->client->get("/v4/sports/tennis_atp_aus_open_singles/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -926,7 +1015,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/golf_pga_championship_winner/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -957,7 +1046,7 @@ class SportController extends Controller
                         $pgagolfResponse = $this->client->get("/v4/sports/golf_pga_championship_winner/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1062,7 +1151,7 @@ class SportController extends Controller
                         $mlbbaseballResponse = $this->client->get("/v4/sports/baseball_mlb/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1138,7 +1227,7 @@ class SportController extends Controller
                     $response = $this->client->get('/v4/sports/soccer_epl/odds', [
                         'query' => [
                             'apiKey' => env('API_KEY'),
-                            'markets' => 'h2h,spreads,totals',
+                            'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
                             'bookmakers' => 'fanduel',
@@ -1169,7 +1258,7 @@ class SportController extends Controller
                         $eplsoccerResponse = $this->client->get("/v4/sports/soccer_epl/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1258,7 +1347,7 @@ class SportController extends Controller
                         $eflcupResponse = $this->client->get("/v4/sports/soccer_england_efl_cup/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1345,7 +1434,7 @@ class SportController extends Controller
                         $uefaResponse = $this->client->get("/v4/sports/soccer_uefa_champs_league/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1432,7 +1521,7 @@ class SportController extends Controller
                         $champResponse = $this->client->get("/v4/sports/soccer_efl_champ/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1519,7 +1608,7 @@ class SportController extends Controller
                         $bundesligaResponse = $this->client->get("/v4/sports/soccer_germany_bundesliga/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1607,7 +1696,7 @@ class SportController extends Controller
                         $laligaResponse = $this->client->get("/v4/sports/soccer_spain_la_liga/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1696,7 +1785,7 @@ class SportController extends Controller
                         $facupResponse = $this->client->get("/v4/sports/soccer_fa_cup/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1785,7 +1874,7 @@ class SportController extends Controller
                         $campeonatoResponse = $this->client->get("/v4/sports/soccer_brazil_campeonato/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1872,7 +1961,7 @@ class SportController extends Controller
                         $turkeysuperResponse = $this->client->get("/v4/sports/soccer_turkey_super_league/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -1959,7 +2048,7 @@ class SportController extends Controller
                         $englandResponse = $this->client->get("/v4/sports/soccer_england_league1/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -2045,7 +2134,7 @@ class SportController extends Controller
                         $australiaResponse = $this->client->get("/v4/sports/soccer_australia_aleague/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',
@@ -2132,7 +2221,7 @@ class SportController extends Controller
                         $chinasuperResponse = $this->client->get("/v4/sports/soccer_china_superleague/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h',
+                                'markets' => 'h2h,totals',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
                                 'bookmakers' => 'fanduel',

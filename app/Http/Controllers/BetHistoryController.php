@@ -25,6 +25,7 @@ class BetHistoryController extends Controller
                 return [
                     'combination_id' => $combination->id,
                     'status' => $combination->status,
+                    'date' => $combination->created_at,
                     'bets' => Bet::where('user_id', $user->id)
                         ->where('bet_combination_id', $combination->id)
                         ->get()
@@ -48,4 +49,28 @@ class BetHistoryController extends Controller
 
         return response()->json($betHistory);
     }
+
+    public function lastBet(Request $request){
+
+        $user = auth()->user();
+
+    $lastSingleBet = Bet::where('user_id', $user->id)
+        ->where('bet_type', 'SINGLE')
+        ->latest('created_at')
+        ->first();
+
+    $lastComboBet = BetCombination::where('user_id', $user->id)
+        ->with('bets')
+        ->latest('created_at')
+        ->first();
+
+    $lastBet = [
+        'last_single_bet' => $lastSingleBet,
+        'last_combo_bet' => $lastComboBet,
+    ];
+
+    return response()->json($lastBet);
+
+    }
+
 }

@@ -6,17 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Bet;
 use App\Models\BetCombination;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Str;
 
-// {
-//     "selected_price":30,
-//     "is_combo_bet": true,
-//     "event_id":["2e4e068dd8799ba3fafa34acfab91fab", "d4be0bb766fcb90b5f0c7dfc5fe3e9fd", "f9797be65a325bc844892ebd2dd41a98", "8bedee5c03bbc287c1a4058b924110da"],
-//     "outcome":["HOME_TEAM_WIN", "AWAY_TEAM_WIN","HOME_TEAM_WIN", "AWAY_TEAM_WIN"],
-//     "bet_amount":[3.7,1.2,6.2,1.1]
-// }
+
 
 class BetController extends Controller
 {
@@ -24,6 +18,14 @@ class BetController extends Controller
     {
 
         $user = auth()->user();
+
+       
+        $user = User::find($user->id);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
         try {
             $jsonData = $request->getContent();
             $data = json_decode($jsonData, true);
@@ -142,36 +144,9 @@ class BetController extends Controller
 
 
 
-                        // echo $response->getContent();
 
                     }
-                    // echo implode(', ', $bets);
-
-                    // echo serialize($prices);
-
-                    // $betCombination = BetCombination::firstOrCreate([
-                    //     "id" => Str::random(32),
-                    //     "user_id" => $user->id,
-                    //     "status" => 'PROCESSING'
-                    // ]);
-                    // for ($i = 0; $i < count($selectedEvents); $i++) {
-                    //     $ID = Str::random(32);
-
-                    //     $bet = Bet::firstOrCreate([
-                    //     'id'=> $ID,
-                    //     "user_id" =>  $user->id,
-                    //     "bet_combination_id" => $betCombination->id,
-                    //     "bet_type" => 'COMBO',
-                    //     "event_id" => $selectedEvents[$i],
-                    //     "outcome" => $selectedOutcomes[$i],
-                    //     "bet_amount" => $betAmounts[$i],
-                    //     "potential_payout" => $betAmounts[$i] * $selectedPrice,
-                    //     "status" => 'PROCESSING',
-                    //     ]);
-                    // }
-
-
-
+                   
 
 
                 } else {
@@ -256,22 +231,7 @@ class BetController extends Controller
                         }
 
                     }
-                    // $selectedOutcome = $request->input('outcome');
-
-                    // $betAmount = $request->input('bet_amount');
-
-                    // $ID = Str::random(24);
-
-                    // $bet = Bet::firstOrCreate([
-                    //     'id' => $ID,
-                    //     "user_id" => $user->id,
-                    //     "bet_type" => 'SINGLE',
-                    //     "event_id" => $eventId[0],
-                    //     "outcome" => $selectedOutcome[0],
-                    //     "bet_amount" => $betAmount[0],
-                    //     "potential_payout" => $betAmount[0] * $selectedPrice,
-                    //     "status" => 'PROCESSING',
-                    // ]);
+              
                 }
 
                 User::where('id', $user->id)->decrement('balance', $selectedPrice);
@@ -280,8 +240,10 @@ class BetController extends Controller
                 return response()->json(['message' => 'Bet placed successfully'], 200);
             }
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json($e->getMessage(), 500);
+            // Log::error($e->getMessage());
+
+            // Log::error($e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
