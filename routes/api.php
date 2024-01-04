@@ -41,11 +41,15 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::post('deposit', [TransactionController::class, 'userAccountDeposit']);
     Route::post('withdraw', [TransactionController::class, 'userRequestWithdrawal']);
     Route::get('history', [TransactionController::class, 'userGetHistory']);
+    Route::delete('deleteaccount', [AuthController::class, 'delete']);
+    Route::put('changepassword', [AuthController::class, 'changePassword']);
     Route::post('placebet',  [BetController::class, 'placeBet']);
     Route::post('settlement',  [Settlement::class, 'checkBetOutcome']);
     Route::get('/bet-history', [BetHistoryController::class, 'index']);
 
 });
+
+
 Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.response']], function () {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
     Route::post('admin/verifications/post', [VerificationController::class, 'adminActivateUser']);
