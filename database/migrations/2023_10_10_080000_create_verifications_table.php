@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('date_of_birth');
             $table->string('profil_picture');
             $table->string('address');
+            $table->string('address2');
+            $table->string('postalcode');
             $table->string('city');
             $table->string('province');
             $table->string('country');

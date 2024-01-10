@@ -11,7 +11,7 @@ class Verification extends Model
 
     protected $fillable = [
           'first_name', 'last_name', 'date_of_birth',
-          'profil_picture', 'address', 'city', 'province',
+          'profil_picture', 'address', 'address2','postalcode', 'city', 'province',
           'country', 'user_id', 'isVerified'
     ];
     public function user()
