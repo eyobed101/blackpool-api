@@ -828,7 +828,7 @@ class SportController extends Controller
                             'markets' => 'h2h,totals',
                             'regions' => 'us',
                             'oddsFormat' => 'decimal',
-                            'bookmakers' => 'fanduel',
+                            'bookmakers' => 'betfair_ex_au',
                         ]
                     ]);
 
@@ -841,10 +841,10 @@ class SportController extends Controller
                 $response = $this->client->get('/v4/sports/tennis_atp_aus_open_singles/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
-                        'markets' => 'h2h,totals',
+                        'markets' => 'h2h',
                         'regions' => 'us',
                         'oddsFormat' => 'decimal',
-                        'bookmakers' => 'fanduel',
+                        'bookmakers' => 'betfair_ex_au',
                     ]
                 ]);
 
@@ -873,10 +873,10 @@ class SportController extends Controller
                         $frenchtennisResponse = $this->client->get("/v4/sports/tennis_atp_french_open/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h,totals',
+                                'markets' => 'h2h',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
-                                'bookmakers' => 'fanduel',
+                                'bookmakers' => 'betfair_ex_au',
                             ]
                         ]);
 
@@ -943,10 +943,10 @@ class SportController extends Controller
                         $austennisResponse = $this->client->get("/v4/sports/tennis_atp_aus_open_singles/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h,totals',
+                                'markets' => 'h2h',
                                 'regions' => 'us',
                                 'oddsFormat' => 'decimal',
-                                'bookmakers' => 'fanduel',
+                                'bookmakers' => 'betfair_ex_au',
                             ]
                         ]);
 
@@ -1929,10 +1929,10 @@ class SportController extends Controller
                 $response = $this->client->get('/v4/sports/soccer_turkey_super_league/odds', [
                     'query' => [
                         'apiKey' => env('API_KEY'),
-                        'markets' => 'h2h,spreads,totals',
-                        'regions' => 'us',
+                        'markets' => 'h2h',
+                        'regions' => 'eu',
                         'oddsFormat' => 'decimal',
-                        'bookmakers' => 'fanduel',
+                        'bookmakers' => 'sport888',
                     ]
                 ]);
 
@@ -1961,10 +1961,10 @@ class SportController extends Controller
                         $turkeysuperResponse = $this->client->get("/v4/sports/soccer_turkey_super_league/events/{$eventId}/odds", [
                             'query' => [
                                 'apiKey' => env('API_KEY'),
-                                'markets' => 'h2h,totals',
-                                'regions' => 'us',
+                                'markets' => 'h2h',
+                                'regions' => 'eu',
                                 'oddsFormat' => 'decimal',
-                                'bookmakers' => 'fanduel',
+                                'bookmakers' => 'sport888',
                             ]
                         ]);
 
