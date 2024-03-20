@@ -14,6 +14,7 @@ use Carbon\Carbon;
 
 use Exception;
 use App\Mail\SendMail;
+
 class AuthController extends Controller
 {
     /**
@@ -33,42 +34,41 @@ class AuthController extends Controller
      */
     public function create(Request $request)
     {
-        // lets create the user first
+        // Validate the incoming request data
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
-
         ]);
+
+        // Check if validation fails
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 401);
         }
 
-        // // Generate a verification code
-        // $verificationCode = mt_rand(100000, 999999); // You can modify this code generation logic
+        // Check if the email already exists
+        $existingUser = User::where('email', $request->input('email'))->first();
+        if ($existingUser) {
+            return response()->json(['error' => 'Email already exists.'], 409);
+        }
 
-        // // Create the user with email unverified status
-        // $input = $request->all();
-        // $input['password'] = bcrypt($input['password']);
-        // $input['verification_code'] = $verificationCode; // Save verification code
-        // $user = User::create($input);
+        // Check if the phone number is null
+        if ($request->input('phone_number') === null) {
+            return response()->json(['error' => 'Please provide a phone number.'], 400);
+        }
 
-        // // Send verification email
-        // Mail::send('emails.verify', ['verificationCode' => $verificationCode], function ($message) use ($user) {
-        //     $message->to($user->email)->subject('Verify Your Email');
-        // });
-
-        // $success['name'] = $user->name;
-        // $success['email'] = $user->email;
-        // return response()->json(['success' => $success], 200);
-
+        // Create the user
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
-        $success['name'] = $user->name;
-        return response()->json(['success' => $success], 200);
 
+        // Prepare success response
+        $success['name'] = $user->name;
+
+        // Return success response
+        return response()->json(['success' => $success], 200);
     }
+
 
     public function delete(Request $request)
     {
@@ -144,7 +144,7 @@ class AuthController extends Controller
                 return response()->json($response, 422);
             }
         } else {
-            $response = ["message" =>'User does not exist'];
+            $response = ["message" => 'User does not exist'];
             return response($response, 422);
         }
     }
@@ -256,18 +256,17 @@ class AuthController extends Controller
     public function GetAllUsers()
     {
         try {
-            $users = User::with('transaction')->where('role', '=', 'USER')->where(function ($query){
-                       return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
+            $users = User::with('transaction')->where('role', '=', 'USER')->where(function ($query) {
+                return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
             })->get();
             $pending_users = User::where('verification_status', '=', 'ONBOARDING')->where('role', '=', 'USER')->get();
-            $verified_users = User::with('transaction')->where('role', '=', 'USER')->get();
+            $verified_users = User::all();
             $disabled_users = User::where('verification_status', '=', 'DISABLED')->where('role', '=', 'USER')->get();
-            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" => $verified_users]);
-         } catch (Exception $e)
-         {
-              Log::error($e->getMessage());
-              return response()->json(["error" => "something went wrong"]);
-         }
+            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" => $users]);
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(["error" => "something went wrong"]);
+        }
     }
     // lets get the latest admins by sorting of 
     public function GetLatestAdmins()
@@ -279,7 +278,7 @@ class AuthController extends Controller
         } catch (Exception $e) {
             Log::error($e->getMessage());
             return response()->json(["error" => "something went wrong"]);
-         }
+        }
     }
     public function SendOTP(Request $request)
     {
@@ -298,25 +297,24 @@ class AuthController extends Controller
             'body' => 'Your OTP is : '. $otp
         ];
 
-        Mail::to($request->email)->send(new SendMail($testMailData));
-       
-         return response(["status" => 200, "message" => "OTP sent successfully"]);
-        }
-        else{
+            Mail::to($request->email)->send(new SendMail($testMailData));
+
+            return response(["status" => 200, "message" => "OTP sent successfully"]);
+        } else {
             return response(["status" => 401, 'message' => 'Invalid']);
         }
     }
-    public function verifyOtp(Request $request){
-    
-        $user  = User::where([['email','=',$request->email],['otp','=',$request->otp]])->first();
-        if($user){
+    public function verifyOtp(Request $request)
+    {
+
+        $user = User::where([['email', '=', $request->email], ['otp', '=', $request->otp]])->first();
+        if ($user) {
             auth()->login($user, true);
-            User::where('email','=',$request->email)->update(['otp' => null]);
+            User::where('email', '=', $request->email)->update(['otp' => null]);
             $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
             return response(["status" => 200, "message" => "Success", 'user' => auth()->user(), 'access_token' => $accessToken]);
-        }
-        else{
+        } else {
             return response(["status" => 401, 'message' => 'Invalid']);
         }
     }

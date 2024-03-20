@@ -42,6 +42,10 @@ class BetHistoryController extends Controller
                 ];
             });
 
+        if ($singleBets->isEmpty() && $comboBets->isEmpty()) {
+            return response()->json(['message' => 'No bet history available.'], 404);
+        }
+
         $betHistory = [
             'single_bets' => $singleBets,
             'combo_bets' => $comboBets,
@@ -50,26 +54,28 @@ class BetHistoryController extends Controller
         return response()->json($betHistory);
     }
 
-    public function lastBet(Request $request){
+
+    public function lastBet(Request $request)
+    {
 
         $user = auth()->user();
 
-    $lastSingleBet = Bet::where('user_id', $user->id)
-        ->where('bet_type', 'SINGLE')
-        ->latest('created_at')
-        ->first();
+        $lastSingleBet = Bet::where('user_id', $user->id)
+            ->where('bet_type', 'SINGLE')
+            ->latest('created_at')
+            ->first();
 
-    $lastComboBet = BetCombination::where('user_id', $user->id)
-        ->with('bets')
-        ->latest('created_at')
-        ->first();
+        $lastComboBet = BetCombination::where('user_id', $user->id)
+            ->with('bets')
+            ->latest('created_at')
+            ->first();
 
-    $lastBet = [
-        'last_single_bet' => $lastSingleBet,
-        'last_combo_bet' => $lastComboBet,
-    ];
+        $lastBet = [
+            'last_single_bet' => $lastSingleBet,
+            'last_combo_bet' => $lastComboBet,
+        ];
 
-    return response()->json($lastBet);
+        return response()->json($lastBet);
 
     }
 
