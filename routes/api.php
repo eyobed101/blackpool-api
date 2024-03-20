@@ -47,10 +47,8 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::post('placebet',  [BetController::class, 'placeBet']);
     Route::post('settlement',  [Settlement::class, 'checkBetOutcome']);
     Route::get('/bet-history', [BetHistoryController::class, 'index']);
-
+   
 });
-
-
 Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.response']], function () {
     Route::get('admin/verifications/get', [VerificationController::class, 'adminVerifyUsers']);
     Route::post('admin/verifications/post', [VerificationController::class, 'adminActivateUser']);
@@ -71,6 +69,8 @@ Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.respon
     Route::post("admin/wallets/create", [WalletController::class, 'createWalletAddress']);
     Route::get("admin/wallets/get", [WalletController::class, 'getWalletAddresses']);
     Route::post("admin/wallets/setDefault", [WalletController::class, 'setDefaultWalletAddress']);
+    Route::post("admin/users/addBonus", [AuthController::class, 'AddBonusToUser']);
+    Route::post("admin/profile/changePassword", [AuthController::class, 'changePassword']);
 });
 Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function(){
      // lets create the routes of the admin

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Contracts\Mail\Mailable;
-
+use Carbon\Carbon;
 
 use Exception;
 use App\Mail\SendMail;
@@ -128,16 +128,17 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
         if ($user) {
             if (Hash::check($request->password, $user->password)) {
-                $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                $response = [
-                    'user' => [
-                        'username' => $user->name,
-                        'email' => $user->email,
-                        'phoneNumber' => $user->phone_number,
-                    ],
-                    'token' => $token,
-                ];
-                return response()->json($response, 200);
+                if($user->role == "USER")
+                {
+                        $token = $user->createToken('Laravel Password Grant Client')->accessToken;
+                        $response = ['username' => $user->name, 'token' => $token];
+                        return response()->json($response, 200);
+                }
+                else if($user->role == "ADMIN" || $user->role == "SUPERADMIN") {
+                      // $token = $user->createToken('Laravel Password Grant Client')->accessToken;
+                      $response = ['username' => $user->name, 'email' => $user->email];
+                      return response()->json($response, 200);
+                }
             } else {
                 $response = ["message" => "wrong username or password"];
                 return response()->json($response, 422);
@@ -193,15 +194,52 @@ class AuthController extends Controller
             return response()->json(['error' => 'Something went wrong']);
         }
     }
-    public function showAllAdmins()
+    public function showAllAdmins(Request $request)
     {
         // we are going to use this routes to show all the available agents
         try {
             $admin_list = User::where('role', '=', 'ADMIN')->get();
+            $start_date =  $request->query('start', null);
+            $end_date = $request->query('end', null);
             foreach ($admin_list as $agent) {
                 // lets get all the users with the agent id in the registration
+                $total_agent_users_withdrawal = 0;
+                $total_agent_users_deposit = 0;
+                $users_withdrawal = [];
+                $users_deposit = [];
                 $customers = User::where('admin_id', '=', $agent->id)->with('transaction')->get();
+                if($start_date != null && $end_date != null)
+                {
+                    $users_withdrawal = User::where('admin_id', '=', $agent->id)->with(['transaction' => function ($query) use ($start_date, $end_date) {
+                        $query->where('type', '=', 'WITHDRAW');
+                        $query->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)]);
+                    }])->get();
+                    $users_deposit = User::where('admin_id', '=', $agent->id)->with(['transaction' => function ($query) use ($start_date, $end_date) {
+                        $query->where('type', '=', 'DEPOSIT');
+                        $query->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)]);
+                    }])->get();
+                } else {
+                    $users_withdrawal = User::where('admin_id', '=', $agent->id)->with(['transaction' => function ($query) use ($start_date, $end_date) {
+                        $query->where('type', '=', 'WITHDRAW');
+                    }])->get();
+                    $users_deposit = User::where('admin_id', '=', $agent->id)->with(['transaction' => function ($query) use ($start_date, $end_date) {
+                        $query->where('type', '=', 'DEPOSIT');
+                    }])->get();
+                }
+                foreach($users_withdrawal as $users) {
+                     foreach($users->transaction as $withdraw) {
+                          $total_agent_users_withdrawal = $total_agent_users_withdrawal + $withdraw->amount;
+                     }
+                }
+                foreach($users_deposit as $users) {
+                    foreach($users->transaction as $deposit) {
+                         $total_agent_users_deposit = $total_agent_users_withdrawal + $deposit->amount;
+                    }
+               }
                 $agent["customer"] = $customers;
+                $agent["total_withdrawal"] = $total_agent_users_withdrawal;
+                $agent["total_deposit"] = $total_agent_users_deposit;
+                // Log::info($agent["total_withdrawal"]);
             }
             return response()->json(['admins' => $admin_list]);
         } catch (Exception $e) {
@@ -244,19 +282,20 @@ class AuthController extends Controller
     }
     public function SendOTP(Request $request)
     {
-        $otp = rand(1000, 9999);
-        Log::info("otp = " . $otp);
-        $user = User::where('email', '=', $request->email)->update(['otp' => $otp]);
-        if ($user) {
-            //  send otp in the email
-            $mail_details = [
-                'subject' => 'Testing Application OTP',
-                'body' => 'Your OTP is : ' . $otp
-            ];
-            $testMailData = [
-                'title' => 'Blackpool login OTP',
-                'body' => 'Your OTP is : ' . $otp
-            ];
+        $otp = rand(1000,9999);
+        Log::info("otp = ".$otp);
+        $user = User::where('email','=', $request->email)->update(['otp'=>$otp]);
+        if($user){
+      //  send otp in the email
+        $mail_details = [
+            'subject' => 'Testing Application OTP',
+            'body' => 'Your OTP is : '. $otp
+        ];
+        $testMailData = [
+            'title' => 'Blackpool login OTP',
+            'subject' => 'OTP for Login',
+            'body' => 'Your OTP is : '. $otp
+        ];
 
             Mail::to($request->email)->send(new SendMail($testMailData));
 
@@ -278,6 +317,35 @@ class AuthController extends Controller
         } else {
             return response(["status" => 401, 'message' => 'Invalid']);
         }
+    }
+    // lets add user bonus to the user
+    public function AddBonusToUser(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'amount' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 401);
+        }
+        // lets then add the bonus to the user
+        try {
+            $selected_users = User::findOrFail($request->user_id);
+            $updated_value = $selected_users->balance + $request->amount;
+            $selected_users->update([
+                 "balance" => $updated_value
+            ]);
+            $testMailData = [
+                'title' => 'You have received a bonus !!!!!!!!',
+                'subject' => 'Bonus Received',
+                'body' => 'Dear ' . $selected_users->name . ' you have received ' . $request->amount . 'USDT.'
+            ];
+            Mail::to($selected_users->email)->send(new SendMail($testMailData));
+            return response()->json(['message' => 'successfuly gave bonus'], 200);
+       
+        } catch(Exception $e) {
+             return response()->json(['message' => 'something went wrong'], 500);
+        }
+     
     }
     /**
      * Store a newly created resource in storage.
