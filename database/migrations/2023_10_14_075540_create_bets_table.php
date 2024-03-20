@@ -14,19 +14,19 @@ return new class extends Migration
     public function up()
     {
         Schema::create('bets', function (Blueprint $table) {
-            $table->id();
+            $table->string('id', 32)->unique();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('event_id');
-            $table->unsignedBigInteger('bet_combination_id')->nullable();
+            $table->enum('bet_type', ['SINGLE', 'COMBO']);
+            $table->string('event_id');
+            $table->string('bet_combination_id')->nullable();
             $table->string('outcome');
-            $table->integer('bet_amount');
+            $table->decimal('bet_amount');
             $table->decimal('potential_payout', 8, 2);
             $table->enum('status', ['PROCESSING', 'COMPLETED', 'FAILED']);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');
             
-            $table->foreign('event_id')->references('id')->on('events');
             $table->foreign('bet_combination_id')->references('id')->on('bet_combinations');
         });
     }

@@ -15,12 +15,14 @@ return new class extends Migration
     {
         Schema::create('verifications', function (Blueprint $table) {
             $table->id();
-            $table->BigInteger('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('date_of_birth');
-            $table->string('profie_picture');
+            $table->string('profil_picture');
             $table->string('address');
+            $table->string('address2');
+            $table->string('postalcode');
             $table->string('city');
             $table->string('province');
             $table->string('country');

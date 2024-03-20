@@ -14,19 +14,15 @@ return new class extends Migration
     public function up()
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->BigInteger('user_id');
-            $table->BigInteger('bet_id');
-            $table->string('type');
+            $table->string('id', 32)->unique();
+            $table->unsignedBigInteger('user_id');
+            $table->enum('type', ['WITHDRAW', 'DEPOSIT']);
             $table->integer('amount');
-            $table->date('date');
-            $table->string('crypto_type');
-            $table->string('status');
-            $table->string('image');
+            $table->string('crypto_type')->nullable(true);
+            $table->enum('status', ["SUCCESS", "PENDING", "FAILED"]);
+            $table->string('image')->nullable(true);
             $table->timestamps();
-
             $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('bet_id')->references('id')->on('bets');
         });
     }
 
