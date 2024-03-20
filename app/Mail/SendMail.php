@@ -26,7 +26,7 @@ class SendMail extends Mailable
 
     public function build()
     {
-        return $this->subject('OTP code for login')
+        return $this->subject($this->testMailData["subject"])
                     ->view('emails.testMail');
     }
 }
