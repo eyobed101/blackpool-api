@@ -131,8 +131,17 @@ class AuthController extends Controller
                 if($user->role == "USER")
                 {
                         $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                        $response = ['username' => $user->name, 'token' => $token];
-                        return response()->json($response, 200);
+                        $response = [
+                    'user' => [
+                        'username' => $user->name,
+                        'email' => $user->email,
+                        'phoneNumber' => $user->phone_number,
+                        'balance' => $user->balance,
+                        'verification_status' => $user->verification_status
+                    ],
+                    'token' => $token,
+                ];
+                return response()->json($response, 200);
                 }
                 else if($user->role == "ADMIN" || $user->role == "SUPERADMIN") {
                       // $token = $user->createToken('Laravel Password Grant Client')->accessToken;
@@ -260,9 +269,10 @@ class AuthController extends Controller
                 return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
             })->get();
             $pending_users = User::where('verification_status', '=', 'ONBOARDING')->where('role', '=', 'USER')->get();
-            $verified_users = User::all();
+            $verified_users = User::with('transaction')->where('role', '=', 'USER')->get();
             $disabled_users = User::where('verification_status', '=', 'DISABLED')->where('role', '=', 'USER')->get();
-            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" => $users]);
+            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" 
+=> $verified_users]);
         } catch (Exception $e) {
             Log::error($e->getMessage());
             return response()->json(["error" => "something went wrong"]);
