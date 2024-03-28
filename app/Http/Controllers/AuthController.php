@@ -177,7 +177,13 @@ class AuthController extends Controller
     }
     public function createUserWithAdminId(Request $request)
     {
-        $admin_id = $request->route('admin_id');
+        $registration_code = $request->route('admin_id');
+        $admin_id = $registration_code - 4000; // lets make sure the admin code starts from 4000
+        if($admin_id < 0)
+        {
+             return response()->json(["error" => "wrong agent id submitted"], 500);
+        } 
+        // 
         try {
             $admin = User::findOrFail($admin_id);
             $validator = Validator::make($request->all(), [
