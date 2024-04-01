@@ -184,7 +184,7 @@ class AuthController extends Controller
              return response()->json(["error" => "wrong agent id submitted"], 500);
         } 
         // 
-        try {
+         try {
             $admin = User::findOrFail($admin_id);
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
