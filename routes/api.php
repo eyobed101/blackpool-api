@@ -13,7 +13,8 @@ use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\WalletController;
-use Illuminate\Database\Events\TransactionCommitted;
+use App\Http\Controllers\BannerController;
+use App\Models\BannerModel;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,8 +70,12 @@ Route::group(['middleware' => ['auth:api','cors', 'superAdminAuth', 'json.respon
     Route::post("admin/wallets/create", [WalletController::class, 'createWalletAddress']);
     Route::get("admin/wallets/get", [WalletController::class, 'getWalletAddresses']);
     Route::post("admin/wallets/setDefault", [WalletController::class, 'setDefaultWalletAddress']);
+    Route::post("admin/banners/create", [BannerController::class, 'createBannerImage']);
+    Route::get("admin/banners/get", [BannerController::class, 'getAllBanners']);
+    Route::post("admin/banners/setDefault", [BannerController::class, 'setDefaultBannerImage']);
     Route::post("admin/users/addBonus", [AuthController::class, 'AddBonusToUser']);
     Route::post("admin/profile/changePassword", [AuthController::class, 'changePassword']);
+
 });
 Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], function(){
      // lets create the routes of the admin
@@ -80,6 +85,7 @@ Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], funct
 });
 Route::get('/games', [SportController::class, 'getGames']);
 Route::get("/wallets/getDefault", [WalletController::class, 'getDefaultWalletAddress']);
+Route::get("/banners/getDefault", [BannerController::class, 'getActiveBannerImage']);
 Route::get('/scores', [ScoreController::class, 'getScores']);
 
 
