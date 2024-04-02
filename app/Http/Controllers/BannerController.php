@@ -67,14 +67,14 @@ class BannerController extends Controller
                }
                $id = $request->banner_id;
                // set the old wallet false
-               walletModel::where('isCurrent', '=', true)->update([
-                  'isCurrent' => false
+               BannerModel::where('isActive', '=', true)->update([
+                  'isActive' => false
                ]);
                $current_banner = BannerModel::find($id);
                $current_banner->update([
-                 'isCurrent' => true
+                 'isActive' => true
                ]);
-               return response()->json(['wallet' => $current_banner]);
+               return response()->json(['banner' => $current_banner], 200);
           }
           catch(Exception $e) {
             Log::info($e->getMessage());
