@@ -21,8 +21,7 @@ class TransactionController extends Controller
            try {
               // lets ceate the user account deposit
               $validator  = Validator::make($request->all(), [
-                  'amount' => 'required',
-                  'crypto_type' => 'required',
+                  'amount' => 'required|numeric|gt:0',
              ]);
                 if  ($validator->fails()) {
                     return response()->json(['error'  => $validator->errors()], 500);
@@ -32,17 +31,17 @@ class TransactionController extends Controller
                 }
                 $user_id = Auth::user()->id;
                 // lets check if the user is verified first
-                if(Auth::user()->verification_status == "ONBOARDING")
-                {
-                     return response()->json(['error' => 'user not verified']);
-                }
+               //  if(Auth::user()->verification_status == "ONBOARDING")
+               //  {
+               //       return response()->json(['error' => 'user not verified']);
+               //  }
                 $time_now = Carbon::now()->getTimestamp();
                 $transaction_image = $request->file('transaction_image'); // lets get the uploaded file
                 $filename = strval($time_now) . '-' . $transaction_image->getClientOriginalName();
                 $transaction = Transaction::create([
                     "id" => Str::random(32),
                     'amount' => $request->amount,
-                    'crypto_type' => $request->crypto_type,
+                    'crypto_type' => "USDT",
                     'type' => "DEPOSIT",
                     'image' => $request->file('transaction_image')->storeAs('user/receipts', $filename),
                     'user_id'  => $user_id,
@@ -120,7 +119,6 @@ class TransactionController extends Controller
             $validator = Validator::make($request->all(), [
                     'wallet_address' => 'required',
                     'amount' => 'required',
-                    'crypto_type' => 'required',
 
             ]);
             if($validator->fails())
@@ -140,7 +138,7 @@ class TransactionController extends Controller
                    "id" => Str::random(32),
                    'wallet_address' => $request->wallet_address,
                    'amount' => $request->amount,
-                   'crypto_type' => $request->crypto_type,
+                   'crypto_type' => "USDT",
                    'type' => 'WITHDRAW',
                    'user_id' => $user->id,
                    'status' => 'PENDING'
@@ -251,31 +249,86 @@ class TransactionController extends Controller
         }
     }
 
-   public function adminGetAllDeposits() {
+   public function adminGetAllDeposits(Request $request) {
      try {
-          $deposits = Transaction::where(function ($query) {
-              return $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
-          })->where('type', '=', 'DEPOSIT')->orderBy('created_at', 'desc')->with('user')->get();
+          // lets add the query parameters
+          $start_date =  $request->query('start', null);
+          $end_date = $request->query('end', null);
+          // lets check if we have start and end date
+          $deposits = [];
+          $success_deposit = [];
+          $failed_deposit = [];
+          if($start_date != null && $end_date != null)
+          {
+               $deposits = Transaction::where(function ($query) {
+                    return $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+                })->where('type', '=', 'DEPOSIT')->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->orderBy('created_at', 'desc')->with('user')->get();
+                $success_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'SUCCESS')->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->get();
+                $failed_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'FAILED')->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->get();
+          } else {
+               $deposits = Transaction::where(function ($query) {
+                    return $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+                })->where('type', '=', 'DEPOSIT')->orderBy('created_at', 'desc')->with('user')->get();
+                $success_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'SUCCESS')->get();
+                $failed_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'FAILED')->get();
+          }
           // lets get the deposit stats
-          $success_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'SUCCESS')->get();
-          $failed_deposit = Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'FAILED')->get();
+          $total_success_deposit = 0;
+          $total_failed_deposit = 0;
+          $total_pending_deposit = 0;
+          forEach($success_deposit as $deposit) {
+               // lets add all the amount together
+               $total_success_deposit = $total_success_deposit + $deposit->amount;
+          }
+          forEach($failed_deposit as $deposit) {
+               $total_failed_deposit = $total_failed_deposit + $deposit->amount;
+          }
           $pending_deposit =  Transaction::where('type', '=', 'DEPOSIT')->where('status', '=', 'PENDING')->get();
-          return response()->json(["success"=>count($success_deposit),  "pending"=>count($pending_deposit), "failed" => count($failed_deposit),  "deposits" => $deposits], 200);
+          forEach($pending_deposit as $deposit) {
+               $total_pending_deposit = $total_pending_deposit +$deposit->amount;
+          }
+          return response()->json(["success"=>$total_success_deposit,  "pending"=>$total_pending_deposit, "failed" => $total_failed_deposit,  "deposits" => $deposits], 200);
       } catch(Exception $e) {
         Log::error($e->getMessage());
         return response()->json(["error" => "something went wrog please try again"]);
       }
    }
    
-   public function adminGetAllWithdrawals() {
+   public function adminGetAllWithdrawals(Request $request) {
      try {
-          $withdrawals = Transaction::where('type', '=', 'WITHDRAW')->where(function ($query) {
-               $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
-          })->with('user')->get();
-          $success_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'SUCCESS')->get();
-          $failed_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'FAILED')->get();
+          $start_date =  $request->query('start', null);
+          $end_date = $request->query('end', null);
+          $withdrawals = [];
+          $success_withdrawal = [];
+          $failed_withdrawal = [];
+          Log::info($request->all());
+          if($start_date != null && $end_date != null) {
+               $withdrawals = Transaction::where('type', '=', 'WITHDRAW')->where(function ($query) {
+                    $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+               })->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->with('user')->get();
+               $success_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->where('status', '=', 'SUCCESS')->get();
+               $failed_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->whereBetween('created_at', [Carbon::parse($start_date), Carbon::parse($end_date)])->where('status', '=', 'FAILED')->get();
+          } else {
+               $withdrawals = Transaction::where('type', '=', 'WITHDRAW')->where(function ($query) {
+                    $query->where('status', '=', 'SUCCESS')->orWhere('status', '=', 'FAILED');
+               })->with('user')->get();
+               $success_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'SUCCESS')->get();
+               $failed_withdrawal = Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'FAILED')->get();
+          }
+          $total_success_withdrawal = 0;
+          $total_failed_withdrawal = 0;
+          $total_pending_withdrawal = 0;
+          foreach($success_withdrawal as $withdrawal) {
+                $total_success_withdrawal = $total_success_withdrawal + $withdrawal->amount;
+          }
+          foreach($failed_withdrawal as $withdrawal) {
+               $total_failed_withdrawal = $total_failed_withdrawal + $withdrawal->amount;
+          }
           $pending_withdrawal =  Transaction::where('type', '=', 'WITHDRAW')->where('status', '=', 'PENDING')->get();
-          return response()->json(["success"=>count($success_withdrawal),  "pending"=>count($pending_withdrawal), "failed" => count($failed_withdrawal), "withdrawals" => $withdrawals], 200);
+          foreach($pending_withdrawal as $pending) {
+               $total_pending_withdrawal = $total_pending_withdrawal + $pending->amount;
+          }
+          return response()->json(["success"=>$total_success_withdrawal,  "pending"=>$total_pending_withdrawal, "failed" => $total_failed_withdrawal, "withdrawals" => $withdrawals], 200);
       } catch(Exception $e) {
         Log::error($e->getMessage());
         return response()->json(["error" => "something went wrog please try again"]);
