@@ -134,6 +134,8 @@ class AuthController extends Controller
                         'username' => $user->name,
                         'email' => $user->email,
                         'phoneNumber' => $user->phone_number,
+                        'balance' => $user->balance,
+                        'verification_status' => $user->verification_status
                     ],
                     'token' => $token,
                 ];

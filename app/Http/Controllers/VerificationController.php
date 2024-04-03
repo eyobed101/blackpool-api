@@ -40,11 +40,10 @@ class VerificationController extends Controller
           $userId = $user->id;
 
           $validator = Validator::make($request->all(), [
-               'first_name' => 'required',
-               'last_name' => 'required',
-               'date_of_birth' => 'required',
-               'city' => 'required',
-               'country' => 'required'
+               // 'first_name' => 'required',
+               // 'last_name' => 'required',
+               // 'city' => 'required',
+               // 'country' => 'required'
           ]);
 
           if ($validator->fails()) {
@@ -58,7 +57,6 @@ class VerificationController extends Controller
           }
 
           $input = $request->all();
-          // Update only the fields that are present in the request
           $verification->fill($input);
           $verification->save();
 

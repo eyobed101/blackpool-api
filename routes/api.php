@@ -39,6 +39,7 @@ Route::group(['middleware' => ['auth:api', 'json.response']], function () {
     Route::get('details', [AuthController::class, 'details']);
     Route::post('verifications', [VerificationController::class, 'uploadVerification']);
     Route::get('profileinfo', [VerificationController::class, 'fetchVerificationDetails']);
+    Route::post('updateinfo', [VerificationController::class, 'changeProfile']);
     Route::post('deposit', [TransactionController::class, 'userAccountDeposit']);
     Route::post('withdraw', [TransactionController::class, 'userRequestWithdrawal']);
     Route::get('history', [TransactionController::class, 'userGetHistory']);
