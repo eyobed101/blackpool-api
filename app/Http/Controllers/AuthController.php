@@ -131,8 +131,17 @@ class AuthController extends Controller
                 if($user->role == "USER")
                 {
                         $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                        $response = ['username' => $user->name, 'token' => $token];
-                        return response()->json($response, 200);
+                        $response = [
+                    'user' => [
+                        'username' => $user->name,
+                        'email' => $user->email,
+                        'phoneNumber' => $user->phone_number,
+                        'balance' => $user->balance,
+                        'verification_status' => $user->verification_status
+                    ],
+                    'token' => $token,
+                ];
+                return response()->json($response, 200);
                 }
                 else if($user->role == "ADMIN" || $user->role == "SUPERADMIN") {
                       // $token = $user->createToken('Laravel Password Grant Client')->accessToken;
@@ -168,8 +177,14 @@ class AuthController extends Controller
     }
     public function createUserWithAdminId(Request $request)
     {
-        $admin_id = $request->route('admin_id');
-        try {
+        $registration_code = $request->route('admin_id');
+        $admin_id = $registration_code - 4000; // lets make sure the admin code starts from 4000
+        if($admin_id < 0)
+        {
+             return response()->json(["error" => "wrong agent id submitted"], 500);
+        } 
+        // 
+         try {
             $admin = User::findOrFail($admin_id);
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
@@ -260,9 +275,10 @@ class AuthController extends Controller
                 return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
             })->get();
             $pending_users = User::where('verification_status', '=', 'ONBOARDING')->where('role', '=', 'USER')->get();
-            $verified_users = User::all();
+            $verified_users = User::with('transaction')->where('role', '=', 'USER')->get();
             $disabled_users = User::where('verification_status', '=', 'DISABLED')->where('role', '=', 'USER')->get();
-            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" => $users]);
+            return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" 
+=> $verified_users]);
         } catch (Exception $e) {
             Log::error($e->getMessage());
             return response()->json(["error" => "something went wrong"]);
@@ -346,6 +362,43 @@ class AuthController extends Controller
              return response()->json(['message' => 'something went wrong'], 500);
         }
      
+    }
+    // lets add the profile update
+    public function UserUpdateProfile(Request $request)
+    {
+          // lets first validate the request
+          try {
+               $rules = [];
+               $user_id = Auth::user()->id;
+               if($request->has('name')) {
+                    $rules['name'] = 'required|string|max:255';
+               }
+               if($request->has('email')) {
+                  $rules['email'] = 'email|required|unique:users';
+               }
+               if($request->has('phone_number')) {
+                  $rules['phone_number'] = 'required';
+               }
+               // lets then validate the above condition
+               $validator = Validator::make($request->all(), $rules);
+               if($validator->fails()) {
+                  return response()->json(['error' => $validator->errors()], 500);
+               }
+               $updated_body = $request->all();
+               $user = User::findOrFail($user_id);
+               $user->update($updated_body);
+               if($request->hasFile('profile_picture'))
+               {
+                  $time_now = Carbon::now()->getTimestamp();
+                  $profile_image = $request->file('profile_picture');
+                  $filename = strval($time_now) . '-' . $profile_image->getClientOriginalName();
+                  $user->update(['profile_picture' => $request->file('profile_picture')->storeAs('profileImages', $filename)]);
+               }
+               return response()->json(['profile' => $user], 200);
+          } catch (Exception $e) {
+                Log::error($e->getMessage());
+                return response()->json(['error' => 'Something went wrong']);
+          }
     }
     /**
      * Store a newly created resource in storage.
