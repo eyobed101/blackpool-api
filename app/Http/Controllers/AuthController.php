@@ -363,6 +363,43 @@ class AuthController extends Controller
         }
      
     }
+    // lets add the profile update
+    public function UserUpdateProfile(Request $request)
+    {
+          // lets first validate the request
+          try {
+               $rules = [];
+               $user_id = Auth::user()->id;
+               if($request->has('name')) {
+                    $rules['name'] = 'required|string|max:255';
+               }
+               if($request->has('email')) {
+                  $rules['email'] = 'email|required|unique:users';
+               }
+               if($request->has('phone_number')) {
+                  $rules['phone_number'] = 'required';
+               }
+               // lets then validate the above condition
+               $validator = Validator::make($request->all(), $rules);
+               if($validator->fails()) {
+                  return response()->json(['error' => $validator->errors()], 500);
+               }
+               $updated_body = $request->all();
+               $user = User::findOrFail($user_id);
+               $user->update($updated_body);
+               if($request->hasFile('profile_picture'))
+               {
+                  $time_now = Carbon::now()->getTimestamp();
+                  $profile_image = $request->file('profile_picture');
+                  $filename = strval($time_now) . '-' . $profile_image->getClientOriginalName();
+                  $user->update(['profile_picture' => $request->file('profile_picture')->storeAs('profileImages', $filename)]);
+               }
+               return response()->json(['profile' => $user], 200);
+          } catch (Exception $e) {
+                Log::error($e->getMessage());
+                return response()->json(['error' => 'Something went wrong']);
+          }
+    }
     /**
      * Store a newly created resource in storage.
      *

@@ -29,7 +29,8 @@ class User extends Authenticatable
         'verification_status',
         'balance',
         'role',
-        'admin_id'
+        'admin_id',
+        'profile_picture'
     ];
 
     /**
