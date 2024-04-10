@@ -275,7 +275,7 @@ class AuthController extends Controller
                 return $query->where('verification_status', '=', 'VERIFIED')->whereOr('verification_status', '=', 'DISABLED');
             })->get();
             $pending_users = User::where('verification_status', '=', 'ONBOARDING')->where('role', '=', 'USER')->get();
-            $verified_users = User::with('transaction')->where('role', '=', 'USER')->get();
+            $verified_users = User::with('transaction')->with('bet')->where('role', '=', 'USER')->get();
             $disabled_users = User::where('verification_status', '=', 'DISABLED')->where('role', '=', 'USER')->get();
             return response()->json(["pending_users" => count($pending_users), "verified_users" => count($verified_users), "disabled_users" => count($disabled_users), "customers" 
 => $verified_users]);
