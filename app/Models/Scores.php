@@ -10,6 +10,7 @@ class Scores extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'sport_key',
         'sport_title',
         'commence_time',
