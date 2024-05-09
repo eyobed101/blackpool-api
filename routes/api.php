@@ -84,6 +84,7 @@ Route::group(['middleware' => ['auth:api', 'adminAuth', 'json.response']], funct
      Route::get("agent/users/deposit", [AgentController::class, 'GetUsersDeposit']);
      Route::get("agent/users/withdraw", [AgentController::class, 'GetUsersWithdrawal']);
 });
+
 Route::get('/games', [SportController::class, 'getGames']);
 Route::get("/wallets/getDefault", [WalletController::class, 'getDefaultWalletAddress']);
 Route::get("/banners/getDefault", [BannerController::class, 'getActiveBannerImage']);
